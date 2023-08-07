@@ -39,5 +39,5 @@ Now in another file in your project you can use it like this to get a list of al
 import { OrganizationService } from "./services/organization.service";
 
 const organizations = new OrganizationService();
-const orgs = await organizations.findAll();
+const orgs = await organizations.findMany();
 ```

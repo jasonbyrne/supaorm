@@ -20,7 +20,7 @@ export const generateTableService = <
   Database extends DatabaseStructure,
   SchemaName extends string & keyof Database = "public" extends keyof Database
     ? "public"
-    : string & keyof Database
+    : string & keyof Database,
 >(
   supabase: SupabaseClient<Database, SchemaName>
 ) => {
@@ -39,7 +39,7 @@ export const generateTableService = <
     return class<
       TableSchema = SelectRow<Database, TableName>,
       UpdateSchema = UpdateRow<Database, TableName>,
-      InsertSchema = InsertRow<Database, TableName>
+      InsertSchema = InsertRow<Database, TableName>,
     > {
       protected get table() {
         return supabase.from(tableName);
@@ -59,10 +59,10 @@ export const generateTableService = <
         return result.data as TableSchema;
       }
 
-      public async findAllAsNameValue(
+      public async findManyAsNameValue(
         query?: FindManyTableQueryParams<Database, TableName>
       ): Promise<NameAndValue[]> {
-        const results = await this.findAll({
+        const results = await this.findMany({
           ...query,
           select: `${pk}, name`,
         });
@@ -74,7 +74,7 @@ export const generateTableService = <
         });
       }
 
-      public async findAll(
+      public async findMany(
         query?: FindManyTableQueryParams<Database, TableName>
       ) {
         const sort = query?.sort || defaultSort;

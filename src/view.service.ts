@@ -16,13 +16,13 @@ export const generateViewService = <
   Database extends DatabaseStructure,
   SchemaName extends string & keyof Database = "public" extends keyof Database
     ? "public"
-    : string & keyof Database
+    : string & keyof Database,
 >(
   supabase: SupabaseClient<Database, SchemaName>
 ) => {
   return <
     ViewName extends ValidViewName<Database>,
-    ViewSchema = ViewRow<Database, ViewName>
+    ViewSchema = ViewRow<Database, ViewName>,
   >(
     viewName: ViewName,
     pk: ValidViewColumn<Database, ViewName>,
@@ -53,7 +53,7 @@ export const generateViewService = <
         return result.data as ViewSchema;
       }
 
-      public async findAll<T = ViewSchema>(
+      public async findMany<T = ViewSchema>(
         query?: FindManyViewQueryParams<Database, ViewName>
       ): Promise<ListResult<T>> {
         const sort = query?.sort || defaultSort;

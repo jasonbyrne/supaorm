@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { DatabaseStructure } from "./supabase-schema.type";
+import { ColumnType, DatabaseStructure, RowType } from "./supabase-schema.type";
 
 type SchemaName = "public";
 
@@ -15,52 +15,78 @@ export type ValidTableName<Db extends DatabaseStructure> = string &
   keyof Db[SchemaName]["Tables"];
 export type ValidTableColumn<
   Db extends DatabaseStructure,
-  TableName extends ValidTableName<Db>
+  TableName extends ValidTableName<Db>,
 > = string & keyof Db[SchemaName]["Tables"][TableName]["Row"];
 
 export type ValidViewName<Db extends DatabaseStructure> = string &
   keyof Db[SchemaName]["Views"];
 export type ValidViewColumn<
   Db extends DatabaseStructure,
-  ViewName extends ValidViewName<Db>
+  ViewName extends ValidViewName<Db>,
 > = string & keyof Db[SchemaName]["Views"][ViewName]["Row"];
 
-export type ValidFunctionName<Db extends DatabaseStructure> =
+export type ValidFunctionName<Db extends DatabaseStructure> = string &
   keyof Db[SchemaName]["Functions"];
 
 export type FunctionReturns<
   Db extends DatabaseStructure,
-  FunctionName extends ValidFunctionName<Db>
+  FunctionName extends ValidFunctionName<Db>,
 > = Db[SchemaName]["Functions"][FunctionName]["Returns"];
+
+export type FunctionList<
+  Db extends DatabaseStructure,
+  FunctionName extends ValidFunctionName<Db>,
+> = Db[SchemaName]["Functions"][FunctionName]["Returns"] extends Array<any>
+  ? Db[SchemaName]["Functions"][FunctionName]["Returns"]
+  : never;
+
+export type FunctionRow<
+  Db extends DatabaseStructure,
+  FunctionName extends ValidFunctionName<Db>,
+> = Db[SchemaName]["Functions"][FunctionName]["Returns"] extends Array<any>
+  ? Db[SchemaName]["Functions"][FunctionName]["Returns"][number]
+  : ColumnType | RowType;
+
+export type ValidFunctionColumn<
+  Db extends DatabaseStructure,
+  FunctionName extends ValidFunctionName<Db>,
+> = string &
+  Db[SchemaName]["Functions"][FunctionName]["Returns"] extends RowType
+  ? keyof Db[SchemaName]["Functions"][FunctionName]["Returns"]
+  : Db[SchemaName]["Functions"][FunctionName]["Returns"] extends Array<any>
+  ? Db[SchemaName]["Functions"][FunctionName]["Returns"][number] extends RowType
+    ? keyof Db[SchemaName]["Functions"][FunctionName]["Returns"][number]
+    : never
+  : never;
 
 export type FunctionArguments<
   Db extends DatabaseStructure,
-  FunctionName extends ValidFunctionName<Db>
+  FunctionName extends ValidFunctionName<Db>,
 > = Db[SchemaName]["Functions"][FunctionName]["Args"];
 
 export type ValidFunctionArgument<
   Db extends DatabaseStructure,
-  FunctionName extends ValidFunctionName<Db>
+  FunctionName extends ValidFunctionName<Db>,
 > = string & keyof FunctionArguments<Db, FunctionName>;
 
 export type InsertRow<
   Db extends DatabaseStructure,
-  TableName extends ValidTableName<Db>
+  TableName extends ValidTableName<Db>,
 > = Db[SchemaName]["Tables"][TableName]["Insert"];
 
 export type UpdateRow<
   Db extends DatabaseStructure,
-  TableName extends ValidTableName<Db>
+  TableName extends ValidTableName<Db>,
 > = Db[SchemaName]["Tables"][TableName]["Update"];
 
 export type SelectRow<
   Db extends DatabaseStructure,
-  TableName extends ValidTableName<Db>
+  TableName extends ValidTableName<Db>,
 > = Db[SchemaName]["Tables"][TableName]["Row"];
 
 export type ViewRow<
   Db extends DatabaseStructure,
-  ViewName extends ValidViewName<Db>
+  ViewName extends ValidViewName<Db>,
 > = Db[SchemaName]["Views"][ViewName]["Row"];
 
 export type FilterOperator =
@@ -170,7 +196,7 @@ export type SortOrder = [fieldName: string, behavior: SortBehavior];
 
 export type SortTableField<
   Db extends DatabaseStructure,
-  TableName extends ValidTableName<Db>
+  TableName extends ValidTableName<Db>,
 > = {
   field: ValidTableColumn<Db, TableName>;
   ascending?: boolean;
@@ -179,7 +205,7 @@ export type SortTableField<
 
 export type TableServiceOpts<
   Db extends DatabaseStructure,
-  TableName extends ValidTableName<Db>
+  TableName extends ValidTableName<Db>,
 > = {
   defaultSort?: SortTableField<Db, TableName>;
   searchField?: ValidTableColumn<Db, TableName>;
@@ -187,7 +213,7 @@ export type TableServiceOpts<
 
 export type FindOneTableQueryParams<
   Db extends DatabaseStructure,
-  TableName extends ValidTableName<Db>
+  TableName extends ValidTableName<Db>,
 > = {
   sort?: SortTableField<Db, TableName>;
   select?: string;
@@ -195,7 +221,7 @@ export type FindOneTableQueryParams<
 
 export type FindManyTableQueryParams<
   Db extends DatabaseStructure,
-  TableName extends ValidTableName<Db>
+  TableName extends ValidTableName<Db>,
 > = FindOneTableQueryParams<Db, TableName> & {
   page?: number;
   perPage?: number;
@@ -205,7 +231,7 @@ export type FindManyTableQueryParams<
 
 export type ViewSortField<
   Db extends DatabaseStructure,
-  ViewName extends ValidViewName<Db>
+  ViewName extends ValidViewName<Db>,
 > = {
   field: ValidViewColumn<Db, ViewName>;
   ascending?: boolean;
@@ -214,7 +240,7 @@ export type ViewSortField<
 
 export type FindManyViewQueryParams<
   Db extends DatabaseStructure,
-  ViewName extends ValidViewName<Db>
+  ViewName extends ValidViewName<Db>,
 > = {
   page?: number;
   perPage?: number;
@@ -226,7 +252,7 @@ export type FindManyViewQueryParams<
 
 export type FindOneViewQueryParams<
   Db extends DatabaseStructure,
-  ViewName extends ValidViewName<Db>
+  ViewName extends ValidViewName<Db>,
 > = {
   sort?: ViewSortField<Db, ViewName>;
   select?: string;
@@ -234,8 +260,37 @@ export type FindOneViewQueryParams<
 
 export type ViewServiceOpts<
   Db extends DatabaseStructure,
-  ViewName extends ValidViewName<Db>
+  ViewName extends ValidViewName<Db>,
 > = {
   defaultSort?: ViewSortField<Db, ViewName>;
   searchField?: ValidViewColumn<Db, ViewName>;
+};
+
+export type FunctionSortField<
+  Db extends DatabaseStructure,
+  FunctionName extends ValidFunctionName<Db>,
+> = {
+  field: ValidFunctionColumn<Db, FunctionName>;
+  ascending?: boolean;
+  nullsFirst?: boolean;
+};
+
+export type FindManyFunctionQueryParams<
+  Db extends DatabaseStructure,
+  FunctionName extends ValidFunctionName<Db>,
+> = {
+  page?: number;
+  perPage?: number;
+  filters?: QueryFilter[];
+  sort?: FunctionSortField<Db, FunctionName>;
+  select?: string;
+};
+
+export type FindOneFunctionQueryParams<
+  Db extends DatabaseStructure,
+  FunctionName extends ValidFunctionName<Db>,
+> = {
+  sort?: FunctionSortField<Db, FunctionName>;
+  select?: string;
+  filters?: QueryFilter[];
 };

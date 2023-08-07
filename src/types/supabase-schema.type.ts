@@ -6,10 +6,11 @@ export type Json =
   | { [key: string]: Json }
   | Json[];
 
-type ColumnType = string | number | null | undefined | boolean;
+export type ColumnType = string | number | null | undefined | boolean;
 
-type RowType = Record<string, ColumnType>;
-type Relationship = {
+export type RowType = Record<string, ColumnType>;
+
+export type Relationship = {
   foreignKeyName: string;
   columns: string[];
   referencedRelation: string;

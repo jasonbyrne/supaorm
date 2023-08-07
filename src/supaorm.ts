@@ -2,6 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import { generateTableService } from "./table.service";
 import type { DatabaseStructure } from "./types/supabase-schema.type";
 import { generateViewService } from "./view.service";
+import { generateFunctionService } from "./function.service";
 
 export type SupaOrmOpts = {
   projectUrl?: string;
@@ -20,9 +21,10 @@ const SupaOrm = <Db extends DatabaseStructure>(initOpts?: SupaOrmOpts) => {
   const supabase = createClient<Db>(opts.projectUrl, opts.anonKey);
 
   return {
-    getClient: () => supabase,
+    supabase,
     TableService: generateTableService<Db>(supabase),
     ViewService: generateViewService<Db>(supabase),
+    FunctionService: generateFunctionService<Db>(supabase),
   };
 };
 

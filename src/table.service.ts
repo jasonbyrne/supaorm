@@ -45,18 +45,26 @@ export const generateTableService = <
         return supabase.from(tableName);
       }
 
+      public async findOneOrFail(
+        id: string,
+        query?: FindOneTableQueryParams<Database, TableName>
+      ): Promise<TableSchema> {
+        const row = await this.findOne(id, query);
+        if (row === null) throw `Could not find row with id ${id}`;
+        return row;
+      }
+
       public async findOne(
         id: string,
         query?: FindOneTableQueryParams<Database, TableName>
-      ) {
+      ): Promise<TableSchema | null> {
         const result = await this.table
           .select(query?.select || "*")
           .eq(pk, id)
           .limit(1)
           .single();
         if (result.error) throw result.error;
-        if (!result.data) return null;
-        return result.data as TableSchema;
+        return result.data ? (result.data as TableSchema) : null;
       }
 
       public async findManyAsNameValue(

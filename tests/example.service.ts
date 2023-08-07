@@ -1,7 +1,4 @@
-import SupaOrm from "../src/supaorm";
-import { Database } from "./example.schema";
-
-const orm = SupaOrm<Database>();
+import orm from "./example.init";
 
 export class ContactService extends orm.TableService("contact", "id") {}
 export class OrganizationService extends orm.TableService(

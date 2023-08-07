@@ -1,0 +1,33 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "ES2019",
+    "lib": ["es7"],
+    "outDir": "dist",
+    "rootDir": "./src",
+    "declaration": false,
+    "noImplicitAny": false,
+    "noUnusedLocals": true,
+    "removeComments": true,
+    "noLib": false,
+    "useUnknownInCatchVariables": false,
+    "skipLibCheck": true,
+    "strict": false,
+    "strictNullChecks": true,
+    "importHelpers": false,
+    "allowUnreachableCode": false,
+    "exactOptionalPropertyTypes": true,
+    "allowUnusedLabels": false,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitOverride": true,
+    "noImplicitThis": true,
+    "noUnusedParameters": true,
+    "strictBindCallApply": true,
+    "strictFunctionTypes": true,
+    "strictPropertyInitialization": true,
+    "sourceMap": true,
+    "allowJs": true
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "**/*.spec.ts", "tests/*", "dist/*"]
+}

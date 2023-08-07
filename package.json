@@ -1,0 +1,18 @@
+{
+  "name": "supaorm",
+  "version": "0.0.1",
+  "description": "Service-based ORM that augments the Supabbase JavaScript Client",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc"
+  },
+  "author": "",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.32.0"
+  },
+  "devDependencies": {
+    "prettier": "^3.0.1"
+  }
+}

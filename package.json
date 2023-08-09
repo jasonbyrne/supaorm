@@ -1,13 +1,24 @@
 {
   "name": "supaorm",
-  "version": "0.0.1",
-  "description": "Service-based ORM that augments the Supabbase JavaScript Client",
-  "main": "index.js",
+  "version": "0.0.2",
+  "description": "Service-based ORM that augments the Supabase JavaScript Client",
+  "main": "dist/index.js",
+  "keywords": [
+    "orm",
+    "supabase",
+    "supabase-js",
+    "supabase-js-client",
+    "database",
+    "postgres",
+    "postgresql",
+    "sql",
+    "typescript"
+  ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc"
   },
-  "author": "",
+  "author": "Jason Byrne <jasonbyrne662@gmail.com>",
   "license": "Apache-2.0",
   "dependencies": {
     "@supabase/supabase-js": "^2.32.0"

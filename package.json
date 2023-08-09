@@ -1,6 +1,6 @@
 {
   "name": "supaorm",
-  "version": "0.0.21",
+  "version": "0.0.22",
   "description": "Service-based ORM that augments the Supabase JavaScript Client",
   "homepage": "https://github.com/jasonbyrne/supaorm#readme",
   "main": "dist/index.js",

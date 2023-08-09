@@ -7,7 +7,7 @@ import { DatabaseStructure } from "./supaorm.types";
 export interface OrmInterface<Database extends DatabaseStructure> {
   supabase: SupabaseClient<Database>;
   init(supabaseClient: SupabaseClient<Database>): this;
-  TableService: ReturnType<typeof generateTableService>;
-  FunctionService: ReturnType<typeof generateFunctionService>;
-  ViewService: ReturnType<typeof generateViewService>;
+  TableService: ReturnType<typeof generateTableService<Database>>;
+  FunctionService: ReturnType<typeof generateFunctionService<Database>>;
+  ViewService: ReturnType<typeof generateViewService<Database>>;
 }

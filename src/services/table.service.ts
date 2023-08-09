@@ -3,7 +3,7 @@ import { hasFields } from "../utils/has-fields";
 import {
   InsertRow,
   SelectRow,
-  TableColumnType,
+  TableColumn,
   TableFindManyQueryParams,
   TableFindOneQueryParams,
   TableQueryFilter,
@@ -22,9 +22,15 @@ import { getSelectedCols } from "../utils/get-selected-cols";
 export const generateTableService = <Database extends DatabaseStructure>(
   orm: OrmInterface<Database>
 ) => {
-  return <TableName extends ValidTableName<Database>>(
-    tableName: ValidTableName<Database>,
-    pk: ValidTableColumn<Database, TableName>,
+  return <
+    TableName extends ValidTableName<Database>,
+    TablePk extends ValidTableColumn<Database, TableName>,
+    TableSchema = SelectRow<Database, TableName>,
+    UpdateSchema = UpdateRow<Database, TableName>,
+    InsertSchema = InsertRow<Database, TableName>,
+  >(
+    tableName: TableName,
+    pk: TablePk,
     opts?: TableServiceOpts<Database, TableName>
   ) => {
     const searchField = opts?.searchField || "name";
@@ -34,11 +40,15 @@ export const generateTableService = <Database extends DatabaseStructure>(
       nullsFirst: true,
     };
 
-    return class<
-      TableSchema = SelectRow<Database, TableName>,
-      UpdateSchema = UpdateRow<Database, TableName>,
-      InsertSchema = InsertRow<Database, TableName>,
-    > {
+    return class {
+      public get tableName() {
+        return tableName;
+      }
+
+      public get pk() {
+        return pk;
+      }
+
       public get ref() {
         return orm.supabase.from(tableName);
       }
@@ -59,7 +69,7 @@ export const generateTableService = <Database extends DatabaseStructure>(
 
       public async findValue<
         ColumnName extends ValidTableColumn<Database, TableName>,
-        ColumnValue extends TableColumnType<Database, TableName, ColumnName>,
+        ColumnValue extends TableColumn<Database, TableName, ColumnName>,
       >(
         fieldName: ColumnName,
         query?: {

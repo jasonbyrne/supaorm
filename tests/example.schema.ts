@@ -13,16 +13,19 @@ export interface Database {
         Row: {
           id: string;
           name: string;
+          country: string;
           created_at: string;
         };
         Insert: {
           id: string;
           name: string;
+          country: string;
           created_at?: string;
         };
         Update: {
           id?: string;
           name?: string;
+          country?: string;
           created_at?: string;
         };
         Relationships: [];
@@ -64,7 +67,7 @@ export interface Database {
             columns: ["organization_id"];
             referencedRelation: "organization";
             referencedColumns: ["id"];
-          }
+          },
         ];
       };
     };
@@ -87,7 +90,7 @@ export interface Database {
             columns: ["organization_id"];
             referencedRelation: "organization";
             referencedColumns: ["id"];
-          }
+          },
         ];
       };
     };

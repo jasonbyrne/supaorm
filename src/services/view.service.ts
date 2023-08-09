@@ -16,10 +16,11 @@ export const generateViewService = <Database extends DatabaseStructure>(
 ) => {
   return <
     ViewName extends ValidViewName<Database>,
+    ViewPk extends ValidViewColumn<Database, ViewName>,
     ViewSchema = ViewRow<Database, ViewName>,
   >(
     viewName: ViewName,
-    pk: ValidViewColumn<Database, ViewName>,
+    pk: ViewPk,
     opts?: ViewServiceOpts<Database, ViewName>
   ) => {
     const searchField = opts?.searchField || "name";
@@ -30,6 +31,14 @@ export const generateViewService = <Database extends DatabaseStructure>(
     };
 
     return class {
+      public get viewName() {
+        return viewName;
+      }
+
+      public get pk() {
+        return pk;
+      }
+
       public get ref() {
         return orm.supabase.from(viewName);
       }

@@ -15,13 +15,18 @@ import { getSelectedCols } from "../utils/get-selected-cols";
 export const generateFunctionService = <Database extends DatabaseStructure>(
   orm: OrmInterface<Database>
 ) => {
-  return <FunctionName extends ValidFunctionName<Database>>(
+  return <
+    FunctionName extends ValidFunctionName<Database>,
+    ListSchema = FunctionList<Database, FunctionName>,
+    RowSchema = FunctionRow<Database, FunctionName>,
+  >(
     functionName: ValidFunctionName<Database>
   ) => {
-    return class<
-      ListSchema = FunctionList<Database, FunctionName>,
-      RowSchema = FunctionRow<Database, FunctionName>,
-    > {
+    return class {
+      public get functionName() {
+        return functionName;
+      }
+
       public ref(args: FunctionArguments<Database, FunctionName>) {
         return orm.supabase.rpc(functionName, args);
       }

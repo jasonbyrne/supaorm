@@ -4,16 +4,28 @@ import { DatabaseStructure, SchemaName } from "./supaorm.types";
 export type Views<Db extends DatabaseStructure> = Db[SchemaName]["Views"];
 
 export type ValidViewName<Db extends DatabaseStructure> = string &
-  keyof Db[SchemaName]["Views"];
-export type ValidViewColumn<
+  keyof Views<Db>;
+
+export type View<
   Db extends DatabaseStructure,
   ViewName extends ValidViewName<Db>,
-> = string & keyof Db[SchemaName]["Views"][ViewName]["Row"];
+> = Views<Db>[ViewName];
 
 export type ViewRow<
   Db extends DatabaseStructure,
   ViewName extends ValidViewName<Db>,
-> = Db[SchemaName]["Views"][ViewName]["Row"];
+> = View<Db, ViewName>["Row"];
+
+export type ValidViewColumn<
+  Db extends DatabaseStructure,
+  ViewName extends ValidViewName<Db>,
+> = string & keyof ViewRow<Db, ViewName>;
+
+export type ViewColumn<
+  Db extends DatabaseStructure,
+  ViewName extends ValidViewName<Db>,
+  ColumnName extends ValidViewColumn<Db, ViewName>,
+> = ViewRow<Db, ViewName>[ColumnName];
 
 export type ViewQueryFilter<
   Db extends DatabaseStructure,
@@ -45,6 +57,11 @@ export type ViewSortField<
   nullsFirst?: boolean;
 };
 
+export type ViewSelect<
+  Db extends DatabaseStructure,
+  ViewName extends ValidViewName<Db>,
+> = "*" | ValidViewColumn<Db, ViewName>[];
+
 export type ViewFindManyQueryParams<
   Db extends DatabaseStructure,
   ViewName extends ValidViewName<Db>,
@@ -54,5 +71,5 @@ export type ViewFindManyQueryParams<
   filters?: ViewQueryFilter<Db, ViewName>[];
   search?: string;
   sort?: ViewSortField<Db, ViewName>;
-  select?: ValidViewColumn<Db, ViewName>[];
+  select?: ViewSelect<Db, ViewName>;
 };

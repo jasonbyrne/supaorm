@@ -4,17 +4,38 @@ import { DatabaseStructure, SchemaName } from "./supaorm.types";
 export type Tables<Db extends DatabaseStructure> = Db[SchemaName]["Tables"];
 
 export type ValidTableName<Db extends DatabaseStructure> = string &
-  keyof Db[SchemaName]["Tables"];
+  keyof Tables<Db>;
+
+export type Table<
+  Db extends DatabaseStructure,
+  TableName extends ValidTableName<Db>,
+> = Tables<Db>[TableName];
+
+export type InsertRow<
+  Db extends DatabaseStructure,
+  TableName extends ValidTableName<Db>,
+> = Table<Db, TableName>["Insert"];
+
+export type UpdateRow<
+  Db extends DatabaseStructure,
+  TableName extends ValidTableName<Db>,
+> = Table<Db, TableName>["Update"];
+
+export type SelectRow<
+  Db extends DatabaseStructure,
+  TableName extends ValidTableName<Db>,
+> = Table<Db, TableName>["Row"];
+
 export type ValidTableColumn<
   Db extends DatabaseStructure,
   TableName extends ValidTableName<Db>,
-> = string & keyof Db[SchemaName]["Tables"][TableName]["Row"];
+> = string & keyof SelectRow<Db, TableName>;
 
-export type TableColumnType<
+export type TableColumn<
   Db extends DatabaseStructure,
   TableName extends ValidTableName<Db>,
   ColumnName extends ValidTableColumn<Db, TableName>,
-> = Db[SchemaName]["Tables"][TableName]["Row"][ColumnName];
+> = SelectRow<Db, TableName>[ColumnName];
 
 export type SortTableField<
   Db extends DatabaseStructure,
@@ -33,20 +54,14 @@ export type TableServiceOpts<
   searchField?: ValidTableColumn<Db, TableName>;
 };
 
-export type InsertRow<
+export type TableQueryFilter<
   Db extends DatabaseStructure,
   TableName extends ValidTableName<Db>,
-> = Db[SchemaName]["Tables"][TableName]["Insert"];
-
-export type UpdateRow<
-  Db extends DatabaseStructure,
-  TableName extends ValidTableName<Db>,
-> = Db[SchemaName]["Tables"][TableName]["Update"];
-
-export type SelectRow<
-  Db extends DatabaseStructure,
-  TableName extends ValidTableName<Db>,
-> = Db[SchemaName]["Tables"][TableName]["Row"];
+> = [
+  ValidTableColumn<Db, TableName>,
+  `${"" | "not."}${FilterOperator}`,
+  unknown,
+];
 
 export type TableSortField<
   Db extends DatabaseStructure,
@@ -80,13 +95,5 @@ export type TableFindOneQueryParams<
 > = {
   sort?: SortTableField<Db, TableName>;
   select?: TableSelect<Db, TableName>;
+  filters?: TableQueryFilter<Db, TableName>[];
 };
-
-export type TableQueryFilter<
-  Db extends DatabaseStructure,
-  TableName extends ValidTableName<Db>,
-> = [
-  ValidTableColumn<Db, TableName>,
-  `${"" | "not."}${FilterOperator}`,
-  unknown,
-];

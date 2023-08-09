@@ -1,15 +1,15 @@
 import { OrmInterface } from "../types/interface";
 import { DatabaseStructure } from "../types/supaorm.types";
 import {
-  FindManyViewQueryParams,
-  FindOneViewQueryParams,
   ValidViewColumn,
   ValidViewName,
+  ViewFindManyQueryParams,
   ViewRow,
   ViewServiceOpts,
 } from "../types/view.types";
 import { getQueryPagination } from "../utils/get-query-pagination";
 import { getResultsPagination } from "../utils/get-results-pagination";
+import { getSelectedCols } from "../utils/get-selected-cols";
 
 export const generateViewService = <Database extends DatabaseStructure>(
   orm: OrmInterface<Database>
@@ -43,10 +43,10 @@ export const generateViewService = <Database extends DatabaseStructure>(
 
       public async findOne(
         id: string,
-        query?: FindOneViewQueryParams<Database, ViewName>
+        query?: ViewFindManyQueryParams<Database, ViewName>
       ): Promise<ViewSchema | null> {
         const result = await this.ref
-          .select(query?.select || "*")
+          .select(getSelectedCols(query?.select))
           .eq(pk, id)
           .limit(1)
           .single();
@@ -55,7 +55,7 @@ export const generateViewService = <Database extends DatabaseStructure>(
       }
 
       public async findMany(
-        query?: FindManyViewQueryParams<Database, ViewName>
+        query?: ViewFindManyQueryParams<Database, ViewName>
       ) {
         const sort = query?.sort || defaultSort;
         const pagination = getQueryPagination(
@@ -65,7 +65,7 @@ export const generateViewService = <Database extends DatabaseStructure>(
         try {
           const result = await (() => {
             const r = this.ref
-              .select(query?.select || "*", { count: "estimated" })
+              .select(getSelectedCols(query?.select), { count: "estimated" })
               .range(pagination.startIndex, pagination.endIndex)
               .order(sort.field, {
                 ascending: !!sort.ascending,

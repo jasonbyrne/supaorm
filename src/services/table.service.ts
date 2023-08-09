@@ -16,7 +16,7 @@ import {
 import { DatabaseStructure } from "../types/supaorm.types";
 import { getQueryPagination } from "../utils/get-query-pagination";
 import { getResultsPagination } from "../utils/get-results-pagination";
-import { NameAndValue } from "../types/query.types";
+import { CountMethods, NameAndValue } from "../types/query.types";
 import { getSelectedCols } from "../utils/get-selected-cols";
 
 export const generateTableService = <Database extends DatabaseStructure>(
@@ -175,7 +175,7 @@ export const generateTableService = <Database extends DatabaseStructure>(
         value?: string | null | string[],
         args?: {
           filters?: TableQueryFilter<Database, TableName>[];
-          count?: "exact" | "planned" | "estimated";
+          count?: CountMethods;
         }
       ): Promise<number> {
         if (column && value) {

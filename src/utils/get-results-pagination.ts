@@ -1,4 +1,4 @@
-import { QueryPagination } from "../types/supaorm.types";
+import { QueryPagination } from "../types/query.types";
 
 export const getResultsPagination = (
   queryPagination: QueryPagination,

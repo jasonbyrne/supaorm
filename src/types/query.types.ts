@@ -48,3 +48,5 @@ export interface NameAndValue {
 
 export type SortBehavior = { ascending: boolean; nullsFirst: boolean };
 export type SortOrder = [fieldName: string, behavior: SortBehavior];
+
+export type CountMethods = "exact" | "planned" | "estimated";

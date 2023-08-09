@@ -1,6 +1,9 @@
 import SupaORM from "./supaorm";
 
-export * from "./types/supabase-schema.type";
+export * from "./types/view.types";
+export * from "./types/table.types";
+export * from "./types/function.types";
+export * from "./types/query.types";
 export * from "./types/supaorm.types";
 export * from "./supaorm";
 

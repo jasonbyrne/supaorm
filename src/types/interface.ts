@@ -1,8 +1,8 @@
 import { SupabaseClient } from "@supabase/supabase-js";
-import { DatabaseStructure } from "./supabase-schema.type";
 import { generateTableService } from "../services/table.service";
 import { generateViewService } from "../services/view.service";
 import { generateFunctionService } from "../services/function.service";
+import { DatabaseStructure } from "./supaorm.types";
 
 export interface OrmInterface<Database extends DatabaseStructure> {
   supabase: SupabaseClient<Database>;

@@ -20,19 +20,7 @@ export type ViewQueryFilter<
   ViewName extends ValidViewName<Db>,
 > = [ValidViewColumn<Db, ViewName>, `${"" | "not."}${FilterOperator}`, unknown];
 
-export type FindManyViewQueryParams<
-  Db extends DatabaseStructure,
-  ViewName extends ValidViewName<Db>,
-> = {
-  page?: number;
-  perPage?: number;
-  filters?: ViewQueryFilter<Db, ViewName>[];
-  search?: string;
-  sort?: ViewSortField<Db, ViewName>;
-  select?: string;
-};
-
-export type FindOneViewQueryParams<
+export type ViewFindOneQueryParams<
   Db extends DatabaseStructure,
   ViewName extends ValidViewName<Db>,
 > = {
@@ -57,7 +45,7 @@ export type ViewSortField<
   nullsFirst?: boolean;
 };
 
-export type TableFindManyQueryParams<
+export type ViewFindManyQueryParams<
   Db extends DatabaseStructure,
   ViewName extends ValidViewName<Db>,
 > = {

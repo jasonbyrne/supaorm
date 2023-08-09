@@ -1,15 +1,16 @@
 import {
-  FindManyFunctionQueryParams,
-  FindOneFunctionQueryParams,
   FunctionArguments,
+  FunctionFindManyQueryParams,
   FunctionList,
   FunctionRow,
   ValidFunctionName,
 } from "../types/function.types";
 import { OrmInterface } from "../types/interface";
-import { DatabaseStructure, ListResult } from "../types/supaorm.types";
+import { DatabaseStructure } from "../types/supaorm.types";
 import { getResultsPagination } from "../utils/get-results-pagination";
 import { getQueryPagination } from "../utils/get-query-pagination";
+import { ListResult } from "../types/query.types";
+import { getSelectedCols } from "../utils/get-selected-cols";
 
 export const generateFunctionService = <Database extends DatabaseStructure>(
   orm: OrmInterface<Database>
@@ -31,7 +32,7 @@ export const generateFunctionService = <Database extends DatabaseStructure>(
 
       public async findOne(
         args: FunctionArguments<Database, FunctionName>,
-        query?: FindOneFunctionQueryParams
+        query?: FunctionFindManyQueryParams<Database, FunctionName>
       ): Promise<RowSchema | null> {
         const sp = this.ref(args);
         if (query?.filters) {
@@ -40,7 +41,7 @@ export const generateFunctionService = <Database extends DatabaseStructure>(
           });
         }
         const result = await sp
-          .select(query?.select || "*")
+          .select(getSelectedCols(query?.select))
           .limit(1)
           .single();
         if (result.error) throw result.error;
@@ -50,7 +51,7 @@ export const generateFunctionService = <Database extends DatabaseStructure>(
 
       public async findMany<T = ListSchema>(
         args: FunctionArguments<Database, FunctionName>,
-        query?: FindManyFunctionQueryParams
+        query?: FunctionFindManyQueryParams<Database, FunctionName>
       ): Promise<ListResult<T>> {
         const pagination = getQueryPagination(
           query?.page || 1,
@@ -65,7 +66,7 @@ export const generateFunctionService = <Database extends DatabaseStructure>(
               });
             }
             return r
-              .select(query?.select || "*")
+              .select(getSelectedCols(query?.select))
               .range(pagination.startIndex, pagination.endIndex);
           })();
           result.count = result.data ? result.data.length : null;

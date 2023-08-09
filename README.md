@@ -1,4 +1,4 @@
-# supaorm
+# SupaORM
 
 Service-based ORM that augments the Supabbase JavaScript Client
 
@@ -15,12 +15,21 @@ You should also have your Supabase URL and Anon Key defined as environment varia
 Create a file in your project called something like `src/supaorm.ts` with this contents:
 
 ```typescript
-import SupaOrm from "supaorm";
+import { createClient } from "@supabase/supabase-js";
 import { Database } from "./types/supabase.ts";
+import SupaOrm from "supaorm";
 
-const orm = SupaOrm<Database>();
+// Instantiate Supabase client
+const supabase = createClient<Database>(
+  process.env.PUBLIC_SUPABASE_URL || "",
+  process.env.PUBLIC_SUPABASE_ANON_KEY || ""
+);
+
+const orm = SupaOrm(supabase);
 export default orm;
 ```
+
+This creates your Supabase client, with a reference to your database structure, and then passes it into SupaORM.
 
 Create a new folder called `src/services` to contain the services for your individual tables. For this example, our first file will be for a table called `organization` and called `src/services/organization.service.ts` with these contents:
 

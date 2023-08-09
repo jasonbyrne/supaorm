@@ -1,5 +1,4 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { DatabaseStructure } from "./types/supabase-schema.type";
+import type { DatabaseStructure } from "../types/supabase-schema.type";
 import {
   getQueryPagination,
   type FindManyTableQueryParams,
@@ -13,16 +12,12 @@ import {
   type ValidTableColumn,
   type ValidTableName,
   getResultsPagination,
-} from "./types/supaorm.types";
-import { hasIdAndName } from "./supaorm.utils";
+} from "../types/supaorm.types";
+import { OrmInterface } from "../types/interface";
+import { hasFields } from "../utils/has-fields";
 
-export const generateTableService = <
-  Database extends DatabaseStructure,
-  SchemaName extends string & keyof Database = "public" extends keyof Database
-    ? "public"
-    : string & keyof Database,
->(
-  supabase: SupabaseClient<Database, SchemaName>
+export const generateTableService = <Database extends DatabaseStructure>(
+  orm: OrmInterface<Database>
 ) => {
   return <TableName extends ValidTableName<Database>>(
     tableName: ValidTableName<Database>,
@@ -42,7 +37,21 @@ export const generateTableService = <
       InsertSchema = InsertRow<Database, TableName>,
     > {
       protected get table() {
-        return supabase.from(tableName);
+        return orm.supabase.from(tableName);
+      }
+
+      /**
+       * This is designed so that we can override it in child classes
+       */
+      protected mapOutbound(row: TableSchema) {
+        return row;
+      }
+
+      /**
+       * This is designed so that we can override it in child classes
+       */
+      protected mapInbound<T = TableSchema>(row: any): T {
+        return row;
       }
 
       public async findOneOrFail(
@@ -64,19 +73,27 @@ export const generateTableService = <
           .limit(1)
           .single();
         if (result.error) throw result.error;
-        return result.data ? (result.data as TableSchema) : null;
+        return result.data
+          ? this.mapOutbound(result.data as TableSchema)
+          : null;
       }
 
       public async findManyAsNameValue(
-        query?: FindManyTableQueryParams<Database, TableName>
+        query?: FindManyTableQueryParams<Database, TableName> & {
+          nameField?: ValidTableColumn<Database, TableName>;
+        }
       ): Promise<NameAndValue[]> {
+        const nameField = query?.nameField || "name";
         const results = await this.findMany({
           ...query,
-          select: `${pk}, name`,
+          select: `${pk}, ${nameField}`,
         });
         return results.data.map((row) => {
-          if (hasIdAndName(row)) {
-            return { name: row.name, value: row.id };
+          if (hasFields(row, pk, nameField)) {
+            // Need to hack this so that TypeScript is happy, even though we tested for the fields above
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            let castRow = row as any;
+            return { name: castRow[nameField], value: castRow[pk] };
           }
           return { name: "", value: "" };
         });
@@ -114,8 +131,9 @@ export const generateTableService = <
           })();
           if (result.error) throw result.error;
           if (result.count === null) throw "Could not get result count.";
+          const data = result.data as TableSchema[];
           return {
-            data: result.data as TableSchema[],
+            data: data.map((row) => this.mapOutbound(row)),
             pagination: getResultsPagination(pagination, result.count),
           };
         } catch {
@@ -161,10 +179,10 @@ export const generateTableService = <
           data.map((row) => {
             // If row has a property called pk
             if (Object.hasOwnProperty.call(row, pk)) {
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              return this.update((row as any)[pk], row as any as UpdateSchema);
+              const inboundRow = this.mapInbound<UpdateSchema>(row);
+              return this.update((inboundRow as any)[pk], inboundRow);
             }
-            return this.insert(row);
+            return this.insert(this.mapInbound(row));
           })
         );
       }

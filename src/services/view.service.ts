@@ -1,24 +1,18 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { DatabaseStructure } from "./types/supabase-schema.type";
+import type { DatabaseStructure } from "../types/supabase-schema.type";
 import {
   getQueryPagination,
   type FindManyViewQueryParams,
   type FindOneViewQueryParams,
-  type ListResult,
   type ValidViewColumn,
   type ValidViewName,
   type ViewRow,
   type ViewServiceOpts,
   getResultsPagination,
-} from "./types/supaorm.types";
+} from "../types/supaorm.types";
+import { OrmInterface } from "../types/interface";
 
-export const generateViewService = <
-  Database extends DatabaseStructure,
-  SchemaName extends string & keyof Database = "public" extends keyof Database
-    ? "public"
-    : string & keyof Database,
->(
-  supabase: SupabaseClient<Database, SchemaName>
+export const generateViewService = <Database extends DatabaseStructure>(
+  orm: OrmInterface<Database>
 ) => {
   return <
     ViewName extends ValidViewName<Database>,
@@ -37,7 +31,14 @@ export const generateViewService = <
 
     return class {
       protected get table() {
-        return supabase.from(viewName);
+        return orm.supabase.from(viewName);
+      }
+
+      /**
+       * This is designed so that we can override it in child classes
+       */
+      protected mapOutbound(row: ViewSchema) {
+        return row;
       }
 
       public async findOne(
@@ -53,9 +54,9 @@ export const generateViewService = <
         return result.data as ViewSchema;
       }
 
-      public async findMany<T = ViewSchema>(
+      public async findMany(
         query?: FindManyViewQueryParams<Database, ViewName>
-      ): Promise<ListResult<T>> {
+      ) {
         const sort = query?.sort || defaultSort;
         const pagination = getQueryPagination(
           query?.page || 1,
@@ -85,8 +86,9 @@ export const generateViewService = <
           })();
           if (result.error) throw result.error;
           if (result.count === null) throw "Could not get result count.";
+          const data = result.data as ViewSchema[];
           return {
-            data: result.data as T[],
+            data: data.map((row) => this.mapOutbound(row)),
             pagination: getResultsPagination(pagination, result.count),
           };
         } catch {

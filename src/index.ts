@@ -1,3 +1,6 @@
-import SupaOrm from "./supaorm";
+import SupaORM from "./supaorm";
 
-export default SupaOrm;
+export * from "./types/supabase-schema.type";
+export * from "./types/supaorm.types";
+
+export default SupaORM;

@@ -1,5 +1,4 @@
-import { SupabaseClient } from "@supabase/supabase-js";
-import { DatabaseStructure } from "./types/supabase-schema.type";
+import { DatabaseStructure } from "../types/supabase-schema.type";
 import {
   FindManyFunctionQueryParams,
   FindOneFunctionQueryParams,
@@ -10,15 +9,11 @@ import {
   ValidFunctionName,
   getQueryPagination,
   getResultsPagination,
-} from "./types/supaorm.types";
+} from "../types/supaorm.types";
+import { OrmInterface } from "../types/interface";
 
-export const generateFunctionService = <
-  Database extends DatabaseStructure,
-  SchemaName extends string & keyof Database = "public" extends keyof Database
-    ? "public"
-    : string & keyof Database,
->(
-  supabase: SupabaseClient<Database, SchemaName>
+export const generateFunctionService = <Database extends DatabaseStructure>(
+  orm: OrmInterface<Database>
 ) => {
   return <FunctionName extends ValidFunctionName<Database>>(
     functionName: ValidFunctionName<Database>
@@ -30,7 +25,7 @@ export const generateFunctionService = <
       protected storedProcedure(
         args: FunctionArguments<Database, FunctionName>
       ) {
-        return supabase.rpc(functionName, args);
+        return orm.supabase.rpc(functionName, args);
       }
 
       public async execute(args: FunctionArguments<Database, FunctionName>) {

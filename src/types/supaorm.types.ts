@@ -181,11 +181,6 @@ export interface ListResult<T> {
   pagination: ResultsPagination;
 }
 
-export interface RowWithIdAndName {
-  id: string;
-  name: string;
-}
-
 export interface NameAndValue {
   name: string;
   value: string;

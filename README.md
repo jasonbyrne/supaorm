@@ -22,13 +22,17 @@ import { createClient } from "@supabase/supabase-js";
 import { Database } from "./types/supabase.ts";
 import SupaORM from "supaorm";
 
+// Instantiate a singleton of SupaORM, referencing the database schema
+const orm = SupaORM<Database>();
+
 // Instantiate Supabase client
 const supabase = createClient<Database>(
   process.env.PUBLIC_SUPABASE_URL || "",
   process.env.PUBLIC_SUPABASE_ANON_KEY || ""
 );
+// Connect the Supabase client with SupaORM
+orm.init(supabase);
 
-const orm = SupaORM().init(supabase);
 export default orm;
 ```
 

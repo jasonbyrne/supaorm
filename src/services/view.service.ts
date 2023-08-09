@@ -1,15 +1,15 @@
-import type { DatabaseStructure } from "../types/supabase-schema.type";
-import {
-  getQueryPagination,
-  type FindManyViewQueryParams,
-  type FindOneViewQueryParams,
-  type ValidViewColumn,
-  type ValidViewName,
-  type ViewRow,
-  type ViewServiceOpts,
-  getResultsPagination,
-} from "../types/supaorm.types";
 import { OrmInterface } from "../types/interface";
+import { DatabaseStructure } from "../types/supaorm.types";
+import {
+  FindManyViewQueryParams,
+  FindOneViewQueryParams,
+  ValidViewColumn,
+  ValidViewName,
+  ViewRow,
+  ViewServiceOpts,
+} from "../types/view.types";
+import { getQueryPagination } from "../utils/get-query-pagination";
+import { getResultsPagination } from "../utils/get-results-pagination";
 
 export const generateViewService = <Database extends DatabaseStructure>(
   orm: OrmInterface<Database>

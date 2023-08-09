@@ -1,20 +1,23 @@
-import type { DatabaseStructure } from "../types/supabase-schema.type";
-import {
-  getQueryPagination,
-  type FindManyTableQueryParams,
-  type FindOneTableQueryParams,
-  type InsertRow,
-  type NameAndValue,
-  type QueryFilter,
-  type SelectRow,
-  type TableServiceOpts,
-  type UpdateRow,
-  type ValidTableColumn,
-  type ValidTableName,
-  getResultsPagination,
-} from "../types/supaorm.types";
 import { OrmInterface } from "../types/interface";
 import { hasFields } from "../utils/has-fields";
+import {
+  InsertRow,
+  SelectRow,
+  TableColumnType,
+  TableFindManyQueryParams,
+  TableFindOneQueryParams,
+  TableQueryFilter,
+  TableServiceOpts,
+  TableSortField,
+  UpdateRow,
+  ValidTableColumn,
+  ValidTableName,
+} from "../types/table.types";
+import { DatabaseStructure } from "../types/supaorm.types";
+import { getQueryPagination } from "../utils/get-query-pagination";
+import { getResultsPagination } from "../utils/get-results-pagination";
+import { NameAndValue } from "../types/query.types";
+import { getSelectedCols } from "../utils/get-selected-cols";
 
 export const generateTableService = <Database extends DatabaseStructure>(
   orm: OrmInterface<Database>
@@ -54,9 +57,35 @@ export const generateTableService = <Database extends DatabaseStructure>(
         return row;
       }
 
+      public async findValue<
+        ColumnName extends ValidTableColumn<Database, TableName>,
+        ColumnValue extends TableColumnType<Database, TableName, ColumnName>,
+      >(
+        fieldName: ColumnName,
+        query?: {
+          filters?: TableQueryFilter<Database, TableName>[];
+          sort?: TableSortField<Database, TableName>;
+        }
+      ): Promise<ColumnValue> {
+        const sort = query?.sort || defaultSort;
+        const result = await (() => {
+          const r = this.ref.select(fieldName).order(sort.field, {
+            ascending: !!sort.ascending,
+            nullsFirst: !!sort.nullsFirst,
+          });
+          if (query?.filters) {
+            query.filters.forEach((filter) => {
+              r.filter(filter[0], filter[1], filter[2]);
+            });
+          }
+          return r.limit(1).single();
+        })();
+        return result.data as ColumnValue;
+      }
+
       public async findOneOrFail(
         id: string,
-        query?: FindOneTableQueryParams<Database, TableName>
+        query?: TableFindOneQueryParams<Database, TableName>
       ): Promise<TableSchema> {
         const row = await this.findOne(id, query);
         if (row === null) throw `Could not find row with id ${id}`;
@@ -65,10 +94,10 @@ export const generateTableService = <Database extends DatabaseStructure>(
 
       public async findOne(
         id: string,
-        query?: FindOneTableQueryParams<Database, TableName>
+        query?: TableFindOneQueryParams<Database, TableName>
       ): Promise<TableSchema | null> {
         const result = await this.ref
-          .select(query?.select || "*")
+          .select(getSelectedCols(query?.select))
           .eq(pk, id)
           .limit(1)
           .single();
@@ -79,14 +108,14 @@ export const generateTableService = <Database extends DatabaseStructure>(
       }
 
       public async findManyAsNameValue(
-        query?: FindManyTableQueryParams<Database, TableName> & {
+        query?: TableFindManyQueryParams<Database, TableName> & {
           nameField?: ValidTableColumn<Database, TableName>;
         }
       ): Promise<NameAndValue[]> {
         const nameField = query?.nameField || "name";
         const results = await this.findMany({
           ...query,
-          select: `${pk}, ${nameField}`,
+          select: [pk, nameField],
         });
         return results.data.map((row) => {
           if (hasFields(row, pk, nameField)) {
@@ -100,7 +129,7 @@ export const generateTableService = <Database extends DatabaseStructure>(
       }
 
       public async findMany(
-        query?: FindManyTableQueryParams<Database, TableName>
+        query?: TableFindManyQueryParams<Database, TableName>
       ) {
         const sort = query?.sort || defaultSort;
         const pagination = getQueryPagination(
@@ -110,7 +139,7 @@ export const generateTableService = <Database extends DatabaseStructure>(
         try {
           const result = await (() => {
             const r = this.ref
-              .select(query?.select || "*", { count: "estimated" })
+              .select(getSelectedCols(query?.select), { count: "estimated" })
               .range(pagination.startIndex, pagination.endIndex)
               .order(sort.field, {
                 ascending: !!sort.ascending,
@@ -145,7 +174,7 @@ export const generateTableService = <Database extends DatabaseStructure>(
         column?: string,
         value?: string | null | string[],
         args?: {
-          filters?: QueryFilter[];
+          filters?: TableQueryFilter<Database, TableName>[];
           count?: "exact" | "planned" | "estimated";
         }
       ): Promise<number> {

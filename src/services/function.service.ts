@@ -1,16 +1,15 @@
-import { DatabaseStructure } from "../types/supabase-schema.type";
 import {
   FindManyFunctionQueryParams,
   FindOneFunctionQueryParams,
   FunctionArguments,
   FunctionList,
   FunctionRow,
-  ListResult,
   ValidFunctionName,
-  getQueryPagination,
-  getResultsPagination,
-} from "../types/supaorm.types";
+} from "../types/function.types";
 import { OrmInterface } from "../types/interface";
+import { DatabaseStructure, ListResult } from "../types/supaorm.types";
+import { getResultsPagination } from "../utils/get-results-pagination";
+import { getQueryPagination } from "../utils/get-query-pagination";
 
 export const generateFunctionService = <Database extends DatabaseStructure>(
   orm: OrmInterface<Database>
@@ -32,7 +31,7 @@ export const generateFunctionService = <Database extends DatabaseStructure>(
 
       public async findOne(
         args: FunctionArguments<Database, FunctionName>,
-        query?: FindOneFunctionQueryParams<Database, FunctionName>
+        query?: FindOneFunctionQueryParams
       ): Promise<RowSchema | null> {
         const sp = this.ref(args);
         if (query?.filters) {
@@ -51,7 +50,7 @@ export const generateFunctionService = <Database extends DatabaseStructure>(
 
       public async findMany<T = ListSchema>(
         args: FunctionArguments<Database, FunctionName>,
-        query?: FindManyFunctionQueryParams<Database, FunctionName>
+        query?: FindManyFunctionQueryParams
       ): Promise<ListResult<T>> {
         const pagination = getQueryPagination(
           query?.page || 1,

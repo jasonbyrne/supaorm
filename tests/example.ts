@@ -1,10 +1,21 @@
-import { ContactService, OrganizationService } from "./example.service";
+import {
+  ContactService,
+  OrganizationService,
+  ViewContactService,
+} from "./example.service";
 
 const organizations = new OrganizationService();
 const orgs = await organizations.findMany();
 
 const contacts = new ContactService();
 
-contacts.findMany({
-  filters: [["organiation_id", "eq", "1234"]],
+const contact = await contacts.findOneOrFail("adsfasdf");
+
+const viewContacts = new ViewContactService();
+const orgContacts = await viewContacts.findMany({
+  filters: [["organization_id", "eq", "asdfasdf"]],
+});
+
+orgContacts.data.forEach((c) => {
+  console.log(c.first_name);
 });

@@ -1,16 +1,20 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import { generateTableService } from "./services/table.service";
-import type { DatabaseStructure } from "./types/supabase-schema.type";
 import { generateViewService } from "./services/view.service";
 import { generateFunctionService } from "./services/function.service";
 import { OrmInterface } from "./types/interface";
+import { DatabaseStructure } from "./types/supaorm.types";
 
 class SupaORM_Instance<Database extends DatabaseStructure>
   implements OrmInterface<Database>
 {
-  public readonly TableService: ReturnType<typeof generateTableService>;
-  public readonly ViewService: ReturnType<typeof generateViewService>;
-  public readonly FunctionService: ReturnType<typeof generateFunctionService>;
+  public readonly TableService: ReturnType<
+    typeof generateTableService<Database>
+  >;
+  public readonly ViewService: ReturnType<typeof generateViewService<Database>>;
+  public readonly FunctionService: ReturnType<
+    typeof generateFunctionService<Database>
+  >;
   protected supabaseClient: SupabaseClient<Database> | null = null;
 
   public get supabase(): SupabaseClient<Database> {

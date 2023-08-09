@@ -9,19 +9,28 @@ const orgs = await organizations.findMany({
   select: ["id", "name"],
 });
 
+organizations.echo("country");
+
+orgs.data.forEach((row) => {
+  console.log(row.name);
+});
+
 const contacts = new ContactService();
 
 const contact = await contacts.findOneOrFail("adsfasdf", {
-  select: ["created_at"],
-  filters: [["organization_id", "eq", "sdfasd"]],
+  select: ["id", "first_name", "last_name"],
+  where: [["organization_id", "eq", "123"]],
 });
 
+if (contact) console.log(contact);
+
 const viewContacts = new ViewContactService();
+
 const orgContacts = await viewContacts.findMany({
-  filters: [["organization_id", "eq", "asdfasdf"]],
-  select: ["first_name", "last_name"],
+  select: ["id", "first_name", "last_name"],
+  where: [["organization_id", "eq", "123XYZ"]],
 });
 
 orgContacts.data.forEach((c) => {
-  console.log(c.first_name);
+  console.log(c.first_name, c.email);
 });

@@ -68,7 +68,7 @@ export type ViewFindManyQueryParams<
 > = {
   page?: number;
   perPage?: number;
-  filters?: ViewQueryFilter<Db, ViewName>[];
+  where?: ViewQueryFilter<Db, ViewName>[];
   search?: string;
   sort?: ViewSortField<Db, ViewName>;
   select?: ViewSelect<Db, ViewName>;

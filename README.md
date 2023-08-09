@@ -44,8 +44,8 @@ Create a new folder called `src/services` to contain the services for your indiv
 import orm from "../supaorm";
 
 export class OrganizationService extends orm.TableService(
-  "organization",
-  "id"
+  "organization", // Name of the table
+  "id" // Name of the primary key column
 ) {}
 ```
 
@@ -56,4 +56,21 @@ import { OrganizationService } from "./services/organization.service";
 
 const organizations = new OrganizationService();
 const orgs = await organizations.findMany();
+```
+
+To find a single organization
+
+```typescript
+const org = await organizations.findOne(id);
+```
+
+Or to get multiple rows with filtering and pagination
+
+```typescript
+const orgs = await organizations.findMany({
+  select: ["id", "name"],
+  where: [["country", "eq", "USA"]],
+  page: 1,
+  perPage: 50,
+});
 ```

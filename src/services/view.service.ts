@@ -80,8 +80,8 @@ export const generateViewService = <Database extends DatabaseStructure>(
                 ascending: !!sort.ascending,
                 nullsFirst: !!sort.nullsFirst,
               });
-            if (query?.filters) {
-              query.filters.forEach((filter) => {
+            if (query?.where) {
+              query.where.forEach((filter) => {
                 r.filter(filter[0], filter[1], filter[2]);
               });
             }

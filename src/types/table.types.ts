@@ -46,12 +46,29 @@ export type SortTableField<
   nullsFirst?: boolean;
 };
 
+export type TablePartialRow<
+  Db extends DatabaseStructure,
+  TableName extends ValidTableName<Db>,
+> = Partial<SelectRow<Db, TableName>>;
+
+export type TableInboundMapper<
+  Db extends DatabaseStructure,
+  TableName extends ValidTableName<Db>,
+> = (data: unknown) => TablePartialRow<Db, TableName>;
+
+export type TableOutboundMapper<
+  Db extends DatabaseStructure,
+  TableName extends ValidTableName<Db>,
+> = (data: TablePartialRow<Db, TableName>) => unknown;
+
 export type TableServiceOpts<
   Db extends DatabaseStructure,
   TableName extends ValidTableName<Db>,
 > = {
   defaultSort?: SortTableField<Db, TableName>;
   searchField?: ValidTableColumn<Db, TableName>;
+  inbound?: TableInboundMapper<Db, TableName>;
+  outbound?: TableOutboundMapper<Db, TableName>;
 };
 
 export type TableQueryFilter<
@@ -83,10 +100,10 @@ export type TableFindManyQueryParams<
 > = {
   page?: number;
   perPage?: number;
-  filters?: TableQueryFilter<Db, TableName>[];
   search?: string;
   sort?: TableSortField<Db, TableName>;
   select?: TableSelect<Db, TableName>;
+  where?: TableQueryFilter<Db, TableName>[];
 };
 
 export type TableFindOneQueryParams<
@@ -95,5 +112,5 @@ export type TableFindOneQueryParams<
 > = {
   sort?: SortTableField<Db, TableName>;
   select?: TableSelect<Db, TableName>;
-  filters?: TableQueryFilter<Db, TableName>[];
+  where?: TableQueryFilter<Db, TableName>[];
 };

@@ -33,12 +33,8 @@ export const generateTableService = <Database extends DatabaseStructure>(
     pk: TablePk,
     opts?: TableServiceOpts<Database, TableName>
   ) => {
-    const searchField = opts?.searchField || "name";
-    const defaultSort = opts?.defaultSort || {
-      field: "created_at",
-      ascending: true,
-      nullsFirst: true,
-    };
+    const searchField = opts?.searchField;
+    const defaultSort = opts?.defaultSort;
 
     return class {
       public get tableName() {
@@ -53,38 +49,27 @@ export const generateTableService = <Database extends DatabaseStructure>(
         return orm.supabase.from(tableName);
       }
 
-      /**
-       * This is designed so that we can override it in child classes
-       */
-      public mapOutbound(row: TableSchema) {
-        return row;
-      }
-
-      /**
-       * This is designed so that we can override it in child classes
-       */
-      public mapInbound<T = TableSchema>(row: any): T {
-        return row;
-      }
-
       public async findValue<
         ColumnName extends ValidTableColumn<Database, TableName>,
         ColumnValue extends TableColumn<Database, TableName, ColumnName>,
       >(
         fieldName: ColumnName,
         query?: {
-          filters?: TableQueryFilter<Database, TableName>[];
+          where?: TableQueryFilter<Database, TableName>[];
           sort?: TableSortField<Database, TableName>;
         }
       ): Promise<ColumnValue> {
         const sort = query?.sort || defaultSort;
         const result = await (() => {
-          const r = this.ref.select(fieldName).order(sort.field, {
-            ascending: !!sort.ascending,
-            nullsFirst: !!sort.nullsFirst,
-          });
-          if (query?.filters) {
-            query.filters.forEach((filter) => {
+          const r = this.ref.select(fieldName);
+          if (sort) {
+            r.order(sort.field, {
+              ascending: !!sort.ascending,
+              nullsFirst: !!sort.nullsFirst,
+            });
+          }
+          if (query?.where) {
+            query.where.forEach((filter) => {
               r.filter(filter[0], filter[1], filter[2]);
             });
           }
@@ -96,7 +81,7 @@ export const generateTableService = <Database extends DatabaseStructure>(
       public async findOneOrFail(
         id: string,
         query?: TableFindOneQueryParams<Database, TableName>
-      ): Promise<TableSchema> {
+      ) {
         const row = await this.findOne(id, query);
         if (row === null) throw `Could not find row with id ${id}`;
         return row;
@@ -105,16 +90,14 @@ export const generateTableService = <Database extends DatabaseStructure>(
       public async findOne(
         id: string,
         query?: TableFindOneQueryParams<Database, TableName>
-      ): Promise<TableSchema | null> {
+      ) {
         const result = await this.ref
           .select(getSelectedCols(query?.select))
           .eq(pk, id)
           .limit(1)
           .single();
         if (result.error) throw result.error;
-        return result.data
-          ? this.mapOutbound(result.data as TableSchema)
-          : null;
+        return result.data ? result.data : null;
       }
 
       public async findManyAsNameValue(
@@ -150,17 +133,22 @@ export const generateTableService = <Database extends DatabaseStructure>(
           const result = await (() => {
             const r = this.ref
               .select(getSelectedCols(query?.select), { count: "estimated" })
-              .range(pagination.startIndex, pagination.endIndex)
-              .order(sort.field, {
+              .range(pagination.startIndex, pagination.endIndex);
+            if (sort) {
+              r.order(sort.field, {
                 ascending: !!sort.ascending,
                 nullsFirst: !!sort.nullsFirst,
               });
-            if (query?.filters) {
-              query.filters.forEach((filter) => {
+            }
+            if (query?.where) {
+              query.where.forEach((filter) => {
                 r.filter(filter[0], filter[1], filter[2]);
               });
             }
             if (query?.search) {
+              if (!searchField) {
+                throw `No search field is specified on ${this.tableName}`;
+              }
               r.textSearch(searchField, query.search, {
                 type: "websearch",
                 config: "english",
@@ -172,7 +160,7 @@ export const generateTableService = <Database extends DatabaseStructure>(
           if (result.count === null) throw "Could not get result count.";
           const data = result.data as TableSchema[];
           return {
-            data: data.map((row) => this.mapOutbound(row)),
+            data: data,
             pagination: getResultsPagination(pagination, result.count),
           };
         } catch {
@@ -184,7 +172,7 @@ export const generateTableService = <Database extends DatabaseStructure>(
         column?: string,
         value?: string | null | string[],
         args?: {
-          filters?: TableQueryFilter<Database, TableName>[];
+          where?: TableQueryFilter<Database, TableName>[];
           count?: CountMethods;
         }
       ): Promise<number> {
@@ -195,8 +183,8 @@ export const generateTableService = <Database extends DatabaseStructure>(
               .select(pk, { count: args?.count ?? "estimated", head: true })
               .in(column, searchValue);
 
-            if (args?.filters) {
-              args.filters.forEach((filter) => {
+            if (args?.where) {
+              args.where.forEach((filter) => {
                 r.filter(filter[0], filter[1], filter[2]);
               });
             }
@@ -218,15 +206,14 @@ export const generateTableService = <Database extends DatabaseStructure>(
           data.map((row) => {
             // If row has a property called pk
             if (Object.hasOwnProperty.call(row, pk)) {
-              const inboundRow = this.mapInbound<UpdateSchema>(row);
-              return this.update((inboundRow as any)[pk], inboundRow);
+              return this.update((row as any)[pk], row as any as UpdateSchema);
             }
-            return this.insert(this.mapInbound(row));
+            return this.insert(row as InsertSchema);
           })
         );
       }
 
-      public update(pkValue: string, data: UpdateSchema) {
+      public update<Inbound = UpdateSchema>(pkValue: string, data: Inbound) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return this.ref.update(data as any).eq(pk, pkValue);
       }

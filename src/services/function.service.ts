@@ -40,8 +40,8 @@ export const generateFunctionService = <Database extends DatabaseStructure>(
         query?: FunctionFindManyQueryParams<Database, FunctionName>
       ): Promise<RowSchema | null> {
         const sp = this.ref(args);
-        if (query?.filters) {
-          query.filters.forEach((filter) => {
+        if (query?.where) {
+          query.where.forEach((filter) => {
             sp.filter(filter[0], filter[1], filter[2]);
           });
         }
@@ -65,8 +65,8 @@ export const generateFunctionService = <Database extends DatabaseStructure>(
         try {
           const result = await (() => {
             const r = this.ref(args);
-            if (query?.filters) {
-              query.filters.forEach((filter) => {
+            if (query?.where) {
+              query.where.forEach((filter) => {
                 r.filter(filter[0], filter[1], filter[2]);
               });
             }

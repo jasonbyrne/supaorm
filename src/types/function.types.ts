@@ -67,7 +67,7 @@ export type FunctionFindManyQueryParams<
 > = {
   page?: number;
   perPage?: number;
-  filters?: FunctionQueryFilter<Db, FunctionName>[];
+  where?: FunctionQueryFilter<Db, FunctionName>[];
   sort?: FunctionSortField<Db, FunctionName>;
   select?: FunctionSelect<Db, FunctionName>;
 };

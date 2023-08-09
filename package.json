@@ -1,8 +1,17 @@
 {
   "name": "supaorm",
-  "version": "0.0.2",
+  "version": "0.0.21",
   "description": "Service-based ORM that augments the Supabase JavaScript Client",
+  "homepage": "https://github.com/jasonbyrne/supaorm#readme",
   "main": "dist/index.js",
+  "publishConfig": {
+    "access": "public"
+  },
+  "private": false,
+  "files": [
+    "dist/",
+    "README.md"
+  ],
   "keywords": [
     "orm",
     "supabase",
@@ -15,11 +24,19 @@
     "typescript"
   ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsc"
+    "build": "tsc",
+    "lint": "eslint '*/**/*.{js,ts,tsx}' --quiet --fix",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Jason Byrne <jasonbyrne662@gmail.com>",
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jasonbyrne/supaorm.git"
+  },
+  "bugs": {
+    "url": "https://github.com/jasonbyrne/supaorm/issues"
+  },
   "dependencies": {
     "@supabase/supabase-js": "^2.32.0"
   },

@@ -30,14 +30,14 @@ export const generateViewService = <Database extends DatabaseStructure>(
     };
 
     return class {
-      protected get table() {
+      public get ref() {
         return orm.supabase.from(viewName);
       }
 
       /**
        * This is designed so that we can override it in child classes
        */
-      protected mapOutbound(row: ViewSchema) {
+      public mapOutbound(row: ViewSchema) {
         return row;
       }
 
@@ -45,7 +45,7 @@ export const generateViewService = <Database extends DatabaseStructure>(
         id: string,
         query?: FindOneViewQueryParams<Database, ViewName>
       ): Promise<ViewSchema | null> {
-        const result = await this.table
+        const result = await this.ref
           .select(query?.select || "*")
           .eq(pk, id)
           .limit(1)
@@ -64,7 +64,7 @@ export const generateViewService = <Database extends DatabaseStructure>(
         );
         try {
           const result = await (() => {
-            const r = this.table
+            const r = this.ref
               .select(query?.select || "*", { count: "estimated" })
               .range(pagination.startIndex, pagination.endIndex)
               .order(sort.field, {
@@ -97,7 +97,7 @@ export const generateViewService = <Database extends DatabaseStructure>(
       }
 
       public async count() {
-        const result = await this.table.select("*", {
+        const result = await this.ref.select("*", {
           count: "estimated",
           head: true,
         });

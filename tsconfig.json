@@ -5,7 +5,7 @@
     "lib": ["es7"],
     "outDir": "dist",
     "rootDir": "./src",
-    "declaration": false,
+    "declaration": true,
     "noImplicitAny": false,
     "noUnusedLocals": true,
     "removeComments": true,

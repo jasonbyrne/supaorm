@@ -22,21 +22,19 @@ export const generateFunctionService = <Database extends DatabaseStructure>(
       ListSchema = FunctionList<Database, FunctionName>,
       RowSchema = FunctionRow<Database, FunctionName>,
     > {
-      protected storedProcedure(
-        args: FunctionArguments<Database, FunctionName>
-      ) {
+      public ref(args: FunctionArguments<Database, FunctionName>) {
         return orm.supabase.rpc(functionName, args);
       }
 
       public async execute(args: FunctionArguments<Database, FunctionName>) {
-        return this.storedProcedure(args);
+        return this.ref(args);
       }
 
       public async findOne(
         args: FunctionArguments<Database, FunctionName>,
         query?: FindOneFunctionQueryParams<Database, FunctionName>
       ): Promise<RowSchema | null> {
-        const sp = this.storedProcedure(args);
+        const sp = this.ref(args);
         if (query?.filters) {
           query.filters.forEach((filter) => {
             sp.filter(filter[0], filter[1], filter[2]);
@@ -61,7 +59,7 @@ export const generateFunctionService = <Database extends DatabaseStructure>(
         );
         try {
           const result = await (() => {
-            const r = this.storedProcedure(args);
+            const r = this.ref(args);
             if (query?.filters) {
               query.filters.forEach((filter) => {
                 r.filter(filter[0], filter[1], filter[2]);

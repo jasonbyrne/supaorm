@@ -36,21 +36,21 @@ export const generateTableService = <Database extends DatabaseStructure>(
       UpdateSchema = UpdateRow<Database, TableName>,
       InsertSchema = InsertRow<Database, TableName>,
     > {
-      protected get table() {
+      public get ref() {
         return orm.supabase.from(tableName);
       }
 
       /**
        * This is designed so that we can override it in child classes
        */
-      protected mapOutbound(row: TableSchema) {
+      public mapOutbound(row: TableSchema) {
         return row;
       }
 
       /**
        * This is designed so that we can override it in child classes
        */
-      protected mapInbound<T = TableSchema>(row: any): T {
+      public mapInbound<T = TableSchema>(row: any): T {
         return row;
       }
 
@@ -67,7 +67,7 @@ export const generateTableService = <Database extends DatabaseStructure>(
         id: string,
         query?: FindOneTableQueryParams<Database, TableName>
       ): Promise<TableSchema | null> {
-        const result = await this.table
+        const result = await this.ref
           .select(query?.select || "*")
           .eq(pk, id)
           .limit(1)
@@ -109,7 +109,7 @@ export const generateTableService = <Database extends DatabaseStructure>(
         );
         try {
           const result = await (() => {
-            const r = this.table
+            const r = this.ref
               .select(query?.select || "*", { count: "estimated" })
               .range(pagination.startIndex, pagination.endIndex)
               .order(sort.field, {
@@ -152,7 +152,7 @@ export const generateTableService = <Database extends DatabaseStructure>(
         if (column && value) {
           const searchValue = Array.isArray(value) ? value : [value];
           const result = await (() => {
-            const r = this.table
+            const r = this.ref
               .select(pk, { count: args?.count ?? "estimated", head: true })
               .in(column, searchValue);
 
@@ -166,7 +166,7 @@ export const generateTableService = <Database extends DatabaseStructure>(
           })();
           return result.count || 0;
         }
-        const result = await this.table.select(pk, {
+        const result = await this.ref.select(pk, {
           count: "estimated",
           head: true,
         });
@@ -189,12 +189,12 @@ export const generateTableService = <Database extends DatabaseStructure>(
 
       public update(pkValue: string, data: UpdateSchema) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        return this.table.update(data as any).eq(pk, pkValue);
+        return this.ref.update(data as any).eq(pk, pkValue);
       }
 
       public insert(data: InsertSchema | InsertSchema[]) {
         return (
-          this.table
+          this.ref
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             .insert(data as any)
             .select()
@@ -204,7 +204,7 @@ export const generateTableService = <Database extends DatabaseStructure>(
 
       public upsert(data: InsertSchema | InsertSchema[]) {
         return (
-          this.table
+          this.ref
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             .upsert(data as any)
             .select()

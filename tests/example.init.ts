@@ -1,7 +1,7 @@
-import SupaOrm from "../src/supaorm";
 import { Database } from "./example.schema";
 import supabase from "./supabase";
+import SupaORM from "../src";
 
-const orm = SupaOrm<Database>().init(supabase);
+const orm = SupaORM<Database>().init(supabase);
 
 export default orm;

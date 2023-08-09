@@ -20,7 +20,7 @@ Create a file in your project called something like `src/supaorm.ts` with this c
 ```typescript
 import { createClient } from "@supabase/supabase-js";
 import { Database } from "./types/supabase.ts";
-import SupaOrm from "supaorm";
+import SupaORM from "supaorm";
 
 // Instantiate Supabase client
 const supabase = createClient<Database>(
@@ -28,7 +28,7 @@ const supabase = createClient<Database>(
   process.env.PUBLIC_SUPABASE_ANON_KEY || ""
 );
 
-const orm = SupaOrm(supabase);
+const orm = SupaORM().init(supabase);
 export default orm;
 ```
 

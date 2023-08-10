@@ -3,11 +3,11 @@ import { hasFields } from "../utils/has-fields";
 import {
   InsertRow,
   SelectRow,
+  SortTableField,
   TableColumn,
   TableFindManyQueryParams,
   TableFindOneQueryParams,
   TableQueryFilter,
-  TableServiceOpts,
   TableSortField,
   UpdateRow,
   ValidTableColumn,
@@ -19,6 +19,17 @@ import { getResultsPagination } from "../utils/get-results-pagination";
 import { CountMethods, ListResult, NameAndValue } from "../types/query.types";
 import { getSelectedCols } from "../utils/get-selected-cols";
 import type { Except } from "type-fest";
+import { arrayify } from "../utils/arrayify";
+
+export type TableServiceOpts<
+  Db extends DatabaseStructure,
+  TableName extends ValidTableName<Db>,
+> = {
+  defaultSort?: SortTableField<Db, TableName>;
+  searchField?: ValidTableColumn<Db, TableName>;
+  inbound?: <T>(data: T) => T;
+  outbound?: <T>(data: T) => T;
+};
 
 export const generateTableService = <Database extends DatabaseStructure>(
   orm: OrmInterface<Database>
@@ -37,6 +48,7 @@ export const generateTableService = <Database extends DatabaseStructure>(
     type TableSchema = SelectRow<Database, TableName>;
     type UpdateSchema = UpdateRow<Database, TableName>;
     type InsertSchema = InsertRow<Database, TableName>;
+    type PartialSchema = Partial<TableSchema>;
     type ValidColumn = ValidTableColumn<Database, TableName>;
     type ColumnValue<ColumnName extends ValidColumn> = TableColumn<
       Database,
@@ -63,6 +75,14 @@ export const generateTableService = <Database extends DatabaseStructure>(
      */
     const searchField = opts?.searchField;
     const defaultSort = opts?.defaultSort;
+    const inbound = opts?.inbound ?? ((data) => data);
+    const outbound = opts?.outbound ?? ((data) => data);
+
+    const transformInbound = (data: unknown) => {
+      return Array.isArray(data)
+        ? data.map((row) => inbound(row))
+        : [inbound(data)];
+    };
 
     return class {
       public readonly tableName = tableName;
@@ -120,7 +140,7 @@ export const generateTableService = <Database extends DatabaseStructure>(
           .single();
         if (result.error) throw result.error;
         if (!result.data) return null;
-        return result.data as unknown as TableSchema;
+        return outbound(result.data as unknown as TableSchema);
       }
 
       public async findManyAsNameValue(
@@ -190,7 +210,7 @@ export const generateTableService = <Database extends DatabaseStructure>(
           if (result.count === null) throw "Could not get result count.";
           const data = result.data as unknown as TableSchema[];
           return {
-            data: data,
+            data: data.map((row) => outbound(row)),
             pagination: getResultsPagination(pagination, result.count),
           };
         } catch {
@@ -227,42 +247,28 @@ export const generateTableService = <Database extends DatabaseStructure>(
         return result.count || 0;
       }
 
-      public save(data: InsertSchema | InsertSchema[]) {
-        data = Array.isArray(data) ? data : [data];
+      public save(data: PartialSchema | PartialSchema[]) {
         return Promise.all(
-          data.map((row) => {
+          arrayify(data).map((row) => {
             // If row has a property called pk
             if (Object.hasOwnProperty.call(row, pk)) {
-              return this.update((row as any)[pk], row as any as UpdateSchema);
+              return this.update(pk, row);
             }
-            return this.insert(row as InsertSchema);
+            return this.insert(row);
           })
         );
       }
 
-      public update<Inbound = UpdateSchema>(pkValue: string, data: Inbound) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        return this.ref.update(data as any).eq(pk, pkValue);
+      public update(pkValue: string, data: UpdateSchema) {
+        return this.ref.update(inbound(data) as any).eq(pk, pkValue);
       }
 
       public insert(data: InsertSchema | InsertSchema[]) {
-        return (
-          this.ref
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            .insert(data as any)
-            .select()
-            .single()
-        );
+        return this.ref.insert(transformInbound(data)).select().single();
       }
 
       public upsert(data: InsertSchema | InsertSchema[]) {
-        return (
-          this.ref
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            .upsert(data as any)
-            .select()
-            .single()
-        );
+        return this.ref.upsert(transformInbound(data)).select().single();
       }
     };
   };

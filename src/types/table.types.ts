@@ -51,26 +51,6 @@ export type TablePartialRow<
   TableName extends ValidTableName<Db>,
 > = Partial<SelectRow<Db, TableName>>;
 
-export type TableInboundMapper<
-  Db extends DatabaseStructure,
-  TableName extends ValidTableName<Db>,
-> = (data: unknown) => TablePartialRow<Db, TableName>;
-
-export type TableOutboundMapper<
-  Db extends DatabaseStructure,
-  TableName extends ValidTableName<Db>,
-> = (data: TablePartialRow<Db, TableName>) => unknown;
-
-export type TableServiceOpts<
-  Db extends DatabaseStructure,
-  TableName extends ValidTableName<Db>,
-> = {
-  defaultSort?: SortTableField<Db, TableName>;
-  searchField?: ValidTableColumn<Db, TableName>;
-  inbound?: TableInboundMapper<Db, TableName>;
-  outbound?: TableOutboundMapper<Db, TableName>;
-};
-
 export type TableQueryFilter<
   Db extends DatabaseStructure,
   TableName extends ValidTableName<Db>,

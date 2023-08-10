@@ -45,8 +45,18 @@ export const generateTableService = <Database extends DatabaseStructure>(
     >;
     type QueryMany = TableFindManyQueryParams<Database, TableName>;
     type QueryOne = TableFindOneQueryParams<Database, TableName>;
+    type SortField = TableSortField<Database, TableName>;
+    type WhereClause = TableQueryFilter<Database, TableName>;
     type WithoutSelect<T extends { select?: unknown }> = Except<T, "select">;
     type List = ListResult<TableSchema>;
+    type QueryValue = {
+      where?: WhereClause[];
+      sort?: SortField;
+    };
+    type QueryCount = {
+      where?: WhereClause[];
+      count?: CountMethods;
+    };
 
     /**
      * Extract from opts
@@ -64,10 +74,7 @@ export const generateTableService = <Database extends DatabaseStructure>(
 
       public async findValue<ColumnName extends ValidColumn>(
         fieldName: ColumnName,
-        query?: {
-          where?: TableQueryFilter<Database, TableName>[];
-          sort?: TableSortField<Database, TableName>;
-        }
+        query?: QueryValue
       ): Promise<ColumnValue<ColumnName>> {
         const sort = query?.sort || defaultSort;
         const result = await (() => {
@@ -117,7 +124,7 @@ export const generateTableService = <Database extends DatabaseStructure>(
       }
 
       public async findManyAsNameValue(
-        nameField: ValidTableColumn<Database, TableName>,
+        nameField: ValidColumn,
         query: Except<QueryMany, "select">
       ): Promise<NameAndValue[]> {
         const results = await this.findMany({
@@ -194,20 +201,17 @@ export const generateTableService = <Database extends DatabaseStructure>(
       public async count(
         column?: string,
         value?: string | null | string[],
-        args?: {
-          where?: TableQueryFilter<Database, TableName>[];
-          count?: CountMethods;
-        }
+        query?: QueryCount
       ): Promise<number> {
         if (column && value) {
           const searchValue = Array.isArray(value) ? value : [value];
           const result = await (() => {
             const r = this.ref
-              .select(pk, { count: args?.count ?? "estimated", head: true })
+              .select(pk, { count: query?.count ?? "estimated", head: true })
               .in(column, searchValue);
 
-            if (args?.where) {
-              args.where.forEach((filter) => {
+            if (query?.where) {
+              query.where.forEach((filter) => {
                 r.filter(filter[0], filter[1], filter[2]);
               });
             }

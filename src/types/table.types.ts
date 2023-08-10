@@ -1,4 +1,4 @@
-import { FilterOperator } from "./query.types";
+import { FilterOperator, OrderBy } from "./query.types";
 import { DatabaseStructure, SchemaName } from "./supaorm.types";
 
 export type Tables<Db extends DatabaseStructure> = Db[SchemaName]["Tables"];
@@ -83,16 +83,7 @@ export type TableQueryFilter<
 export type TableSortField<
   Db extends DatabaseStructure,
   TableName extends ValidTableName<Db>,
-> = {
-  field: ValidTableColumn<Db, TableName>;
-  ascending?: boolean;
-  nullsFirst?: boolean;
-};
-
-export type TableSelect<
-  Db extends DatabaseStructure,
-  TableName extends ValidTableName<Db>,
-> = ValidTableColumn<Db, TableName>[];
+> = OrderBy<ValidTableColumn<Db, TableName>>;
 
 export type TableFindManyQueryParams<
   Db extends DatabaseStructure,
@@ -102,7 +93,7 @@ export type TableFindManyQueryParams<
   perPage?: number;
   search?: string;
   sort?: TableSortField<Db, TableName>;
-  select?: TableSelect<Db, TableName>;
+  select?: ValidTableColumn<Db, TableName>[];
   where?: TableQueryFilter<Db, TableName>[];
 };
 
@@ -111,6 +102,6 @@ export type TableFindOneQueryParams<
   TableName extends ValidTableName<Db>,
 > = {
   sort?: SortTableField<Db, TableName>;
-  select?: TableSelect<Db, TableName>;
+  select?: ValidTableColumn<Db, TableName>[];
   where?: TableQueryFilter<Db, TableName>[];
 };

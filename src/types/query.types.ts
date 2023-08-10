@@ -50,3 +50,9 @@ export type SortBehavior = { ascending: boolean; nullsFirst: boolean };
 export type SortOrder = [fieldName: string, behavior: SortBehavior];
 
 export type CountMethods = "exact" | "planned" | "estimated";
+
+export type OrderBy<ValidColumn> = {
+  field: ValidColumn;
+  ascending?: boolean;
+  nullsFirst?: boolean;
+};

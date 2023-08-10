@@ -6,8 +6,18 @@ import {
 
 const organizations = new OrganizationService();
 const orgs = await organizations.findMany({
+  select: ["id", "name", "country"],
+});
+
+orgs.data.forEach((r) => {
+  console.log(r.country);
+});
+
+const thisOrg = await organizations.findOne("XYZ", {
   select: ["id", "name"],
 });
+
+if (thisOrg) console.log(thisOrg.id);
 
 organizations.echo("country");
 

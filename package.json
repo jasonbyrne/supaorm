@@ -41,6 +41,8 @@
     "@supabase/supabase-js": "^2.32.0"
   },
   "devDependencies": {
-    "prettier": "^3.0.1"
+    "prettier": "^3.0.1",
+    "type-fest": "^4.2.0",
+    "typescript": "^5.1.6"
   }
 }

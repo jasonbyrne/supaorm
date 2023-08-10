@@ -92,7 +92,7 @@ export type TableSortField<
 export type TableSelect<
   Db extends DatabaseStructure,
   TableName extends ValidTableName<Db>,
-> = "*" | ValidTableColumn<Db, TableName>[];
+> = ValidTableColumn<Db, TableName>[];
 
 export type TableFindManyQueryParams<
   Db extends DatabaseStructure,

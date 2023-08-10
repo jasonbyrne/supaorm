@@ -16,8 +16,9 @@ import {
 import { DatabaseStructure } from "../types/supaorm.types";
 import { getQueryPagination } from "../utils/get-query-pagination";
 import { getResultsPagination } from "../utils/get-results-pagination";
-import { CountMethods, NameAndValue } from "../types/query.types";
+import { CountMethods, ListResult, NameAndValue } from "../types/query.types";
 import { getSelectedCols } from "../utils/get-selected-cols";
+import type { Except } from "type-fest";
 
 export const generateTableService = <Database extends DatabaseStructure>(
   orm: OrmInterface<Database>
@@ -25,40 +26,49 @@ export const generateTableService = <Database extends DatabaseStructure>(
   return <
     TableName extends ValidTableName<Database>,
     TablePk extends ValidTableColumn<Database, TableName>,
-    TableSchema = SelectRow<Database, TableName>,
-    UpdateSchema = UpdateRow<Database, TableName>,
-    InsertSchema = InsertRow<Database, TableName>,
   >(
     tableName: TableName,
     pk: TablePk,
     opts?: TableServiceOpts<Database, TableName>
   ) => {
+    /**
+     * Define types for use within this table
+     */
+    type TableSchema = SelectRow<Database, TableName>;
+    type UpdateSchema = UpdateRow<Database, TableName>;
+    type InsertSchema = InsertRow<Database, TableName>;
+    type ValidColumn = ValidTableColumn<Database, TableName>;
+    type ColumnValue<ColumnName extends ValidColumn> = TableColumn<
+      Database,
+      TableName,
+      ColumnName
+    >;
+    type QueryMany = TableFindManyQueryParams<Database, TableName>;
+    type QueryOne = TableFindOneQueryParams<Database, TableName>;
+    type WithoutSelect<T extends { select?: unknown }> = Except<T, "select">;
+    type List = ListResult<TableSchema>;
+
+    /**
+     * Extract from opts
+     */
     const searchField = opts?.searchField;
     const defaultSort = opts?.defaultSort;
 
     return class {
-      public get tableName() {
-        return tableName;
-      }
-
-      public get pk() {
-        return pk;
-      }
+      public readonly tableName = tableName;
+      public readonly pk = pk;
 
       public get ref() {
         return orm.supabase.from(tableName);
       }
 
-      public async findValue<
-        ColumnName extends ValidTableColumn<Database, TableName>,
-        ColumnValue extends TableColumn<Database, TableName, ColumnName>,
-      >(
+      public async findValue<ColumnName extends ValidColumn>(
         fieldName: ColumnName,
         query?: {
           where?: TableQueryFilter<Database, TableName>[];
           sort?: TableSortField<Database, TableName>;
         }
-      ): Promise<ColumnValue> {
+      ): Promise<ColumnValue<ColumnName>> {
         const sort = query?.sort || defaultSort;
         const result = await (() => {
           const r = this.ref.select(fieldName);
@@ -75,37 +85,41 @@ export const generateTableService = <Database extends DatabaseStructure>(
           }
           return r.limit(1).single();
         })();
-        return result.data as ColumnValue;
+        return result.data as ColumnValue<ColumnName>;
       }
 
-      public async findOneOrFail(
-        id: string,
-        query?: TableFindOneQueryParams<Database, TableName>
-      ) {
-        const row = await this.findOne(id, query);
+      public async findOneOrFail(id: string, query?: QueryOne) {
+        const row = await (query ? this.findOne(id, query) : this.findOne(id));
         if (row === null) throw `Could not find row with id ${id}`;
         return row;
       }
 
+      public async findOne(id: string): Promise<TableSchema | null>;
       public async findOne(
         id: string,
-        query?: TableFindOneQueryParams<Database, TableName>
-      ) {
+        query: WithoutSelect<QueryOne>
+      ): Promise<TableSchema | null>;
+      public async findOne<T extends ValidColumn>(
+        id: string,
+        query: QueryOne & {
+          select: T[];
+        }
+      ): Promise<Pick<TableSchema, T> | null>;
+      public async findOne(id: string, query?: QueryOne) {
         const result = await this.ref
           .select(getSelectedCols(query?.select))
           .eq(pk, id)
           .limit(1)
           .single();
         if (result.error) throw result.error;
-        return result.data ? result.data : null;
+        if (!result.data) return null;
+        return result.data as unknown as TableSchema;
       }
 
       public async findManyAsNameValue(
-        query?: TableFindManyQueryParams<Database, TableName> & {
-          nameField?: ValidTableColumn<Database, TableName>;
-        }
+        nameField: ValidTableColumn<Database, TableName>,
+        query: Except<QueryMany, "select">
       ): Promise<NameAndValue[]> {
-        const nameField = query?.nameField || "name";
         const results = await this.findMany({
           ...query,
           select: [pk, nameField],
@@ -121,6 +135,15 @@ export const generateTableService = <Database extends DatabaseStructure>(
         });
       }
 
+      public async findMany(): Promise<List>;
+      public async findMany(
+        query: WithoutSelect<TableFindManyQueryParams<Database, TableName>>
+      ): Promise<List>;
+      public async findMany<T extends keyof TableSchema>(
+        query: TableFindManyQueryParams<Database, TableName> & {
+          select: T[];
+        }
+      ): Promise<ListResult<Pick<TableSchema, T>>>;
       public async findMany(
         query?: TableFindManyQueryParams<Database, TableName>
       ) {
@@ -158,7 +181,7 @@ export const generateTableService = <Database extends DatabaseStructure>(
           })();
           if (result.error) throw result.error;
           if (result.count === null) throw "Could not get result count.";
-          const data = result.data as TableSchema[];
+          const data = result.data as unknown as TableSchema[];
           return {
             data: data,
             pagination: getResultsPagination(pagination, result.count),

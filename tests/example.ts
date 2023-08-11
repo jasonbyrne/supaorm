@@ -1,3 +1,4 @@
+import { ListOf } from "../src/types/supaorm.types";
 import {
   ContactService,
   OrganizationService,
@@ -5,8 +6,14 @@ import {
 } from "./example.service";
 
 const organizations = new OrganizationService();
+const all: ListOf<OrganizationService> = await organizations.findMany();
+
 const orgs = await organizations.findMany({
   select: ["id", "name", "country"],
+});
+
+all.data.forEach((r) => {
+  console.log(r.created_at);
 });
 
 orgs.data.forEach((r) => {

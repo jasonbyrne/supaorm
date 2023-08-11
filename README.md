@@ -74,3 +74,15 @@ const orgs = await organizations.findMany({
   perPage: 50,
 });
 ```
+
+Now let's create a ContactService method, with a `contact` table that has `id`, `first_name`, `last_name`, and `organization_id` columns. We will create an additional function for this service to find contacts by organization.
+
+```typescript
+import orm from "../supaorm";
+
+export class ContactService extends orm.TableService("contact", "id") {
+  public findByOrganizationId(id: string) {
+    return this.findMany({ where: [["organization_id", "eq", id]] });
+  }
+}
+```

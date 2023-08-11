@@ -3,12 +3,7 @@ import { hasFields } from "../utils/has-fields";
 import {
   InsertRow,
   SelectRow,
-  SortTableField,
   TableColumn,
-  TableFindManyQueryParams,
-  TableFindOneQueryParams,
-  TableQueryFilter,
-  TableSortField,
   UpdateRow,
   ValidTableColumn,
   ValidTableName,
@@ -16,7 +11,15 @@ import {
 import { DatabaseStructure } from "../types/supaorm.types";
 import { getQueryPagination } from "../utils/get-query-pagination";
 import { getResultsPagination } from "../utils/get-results-pagination";
-import { CountMethods, ListResult, NameAndValue } from "../types/query.types";
+import {
+  FindCountParams,
+  FindManyParams,
+  FindOneParams,
+  FindValueParams,
+  ListResult,
+  NameAndValue,
+  OrderBy,
+} from "../types/query.types";
 import { getSelectedCols } from "../utils/get-selected-cols";
 import type { Except } from "type-fest";
 import { arrayify } from "../utils/arrayify";
@@ -25,7 +28,7 @@ export type TableServiceOpts<
   Db extends DatabaseStructure,
   TableName extends ValidTableName<Db>,
 > = {
-  defaultSort?: SortTableField<Db, TableName>;
+  defaultOrderBy?: OrderBy<ValidTableColumn<Db, TableName>>;
   searchField?: ValidTableColumn<Db, TableName>;
   inbound?: <T>(data: T) => T;
   outbound?: <T>(data: T) => T;
@@ -55,26 +58,14 @@ export const generateTableService = <Database extends DatabaseStructure>(
       TableName,
       ColumnName
     >;
-    type QueryMany = TableFindManyQueryParams<Database, TableName>;
-    type QueryOne = TableFindOneQueryParams<Database, TableName>;
-    type SortField = TableSortField<Database, TableName>;
-    type WhereClause = TableQueryFilter<Database, TableName>;
     type WithoutSelect<T extends { select?: unknown }> = Except<T, "select">;
     type List = ListResult<TableSchema>;
-    type QueryValue = {
-      where?: WhereClause[];
-      sort?: SortField;
-    };
-    type QueryCount = {
-      where?: WhereClause[];
-      count?: CountMethods;
-    };
 
     /**
      * Extract from opts
      */
     const searchField = opts?.searchField;
-    const defaultSort = opts?.defaultSort;
+    const defaultOrderBy = opts?.defaultOrderBy;
     const inbound = opts?.inbound ?? ((data) => data);
     const outbound = opts?.outbound ?? ((data) => data);
 
@@ -94,15 +85,15 @@ export const generateTableService = <Database extends DatabaseStructure>(
 
       public async findValue<ColumnName extends ValidColumn>(
         fieldName: ColumnName,
-        query?: QueryValue
+        query?: FindValueParams<ValidColumn>
       ): Promise<ColumnValue<ColumnName>> {
-        const sort = query?.sort || defaultSort;
+        const orderBy = query?.orderBy || defaultOrderBy;
         const result = await (() => {
           const r = this.ref.select(fieldName);
-          if (sort) {
-            r.order(sort.field, {
-              ascending: !!sort.ascending,
-              nullsFirst: !!sort.nullsFirst,
+          if (orderBy) {
+            r.order(orderBy.field, {
+              ascending: !!orderBy.ascending,
+              nullsFirst: !!orderBy.nullsFirst,
             });
           }
           if (query?.where) {
@@ -115,7 +106,10 @@ export const generateTableService = <Database extends DatabaseStructure>(
         return result.data as ColumnValue<ColumnName>;
       }
 
-      public async findOneOrFail(id: string, query?: QueryOne) {
+      public async findOneOrFail(
+        id: string,
+        query?: FindOneParams<ValidColumn>
+      ) {
         const row = await (query ? this.findOne(id, query) : this.findOne(id));
         if (row === null) throw `Could not find row with id ${id}`;
         return row;
@@ -124,15 +118,15 @@ export const generateTableService = <Database extends DatabaseStructure>(
       public async findOne(id: string): Promise<TableSchema | null>;
       public async findOne(
         id: string,
-        query: WithoutSelect<QueryOne>
+        query: WithoutSelect<FindOneParams<ValidColumn>>
       ): Promise<TableSchema | null>;
       public async findOne<T extends ValidColumn>(
         id: string,
-        query: QueryOne & {
+        query: FindOneParams<ValidColumn> & {
           select: T[];
         }
       ): Promise<Pick<TableSchema, T> | null>;
-      public async findOne(id: string, query?: QueryOne) {
+      public async findOne(id: string, query?: FindOneParams<ValidColumn>) {
         const result = await this.ref
           .select(getSelectedCols(query?.select))
           .eq(pk, id)
@@ -145,7 +139,7 @@ export const generateTableService = <Database extends DatabaseStructure>(
 
       public async findManyAsNameValue(
         nameField: ValidColumn,
-        query: Except<QueryMany, "select">
+        query: Except<FindManyParams<ValidColumn>, "select">
       ): Promise<NameAndValue[]> {
         const results = await this.findMany({
           ...query,
@@ -164,17 +158,15 @@ export const generateTableService = <Database extends DatabaseStructure>(
 
       public async findMany(): Promise<List>;
       public async findMany(
-        query: WithoutSelect<TableFindManyQueryParams<Database, TableName>>
+        query: WithoutSelect<FindManyParams<ValidColumn>>
       ): Promise<List>;
       public async findMany<T extends keyof TableSchema>(
-        query: TableFindManyQueryParams<Database, TableName> & {
+        query: FindManyParams<ValidColumn> & {
           select: T[];
         }
       ): Promise<ListResult<Pick<TableSchema, T>>>;
-      public async findMany(
-        query?: TableFindManyQueryParams<Database, TableName>
-      ) {
-        const sort = query?.sort || defaultSort;
+      public async findMany(query?: FindManyParams<ValidColumn>) {
+        const orderBy = query?.orderBy || defaultOrderBy;
         const pagination = getQueryPagination(
           query?.page || 1,
           query?.perPage || 50
@@ -184,10 +176,10 @@ export const generateTableService = <Database extends DatabaseStructure>(
             const r = this.ref
               .select(getSelectedCols(query?.select), { count: "estimated" })
               .range(pagination.startIndex, pagination.endIndex);
-            if (sort) {
-              r.order(sort.field, {
-                ascending: !!sort.ascending,
-                nullsFirst: !!sort.nullsFirst,
+            if (orderBy) {
+              r.order(orderBy.field, {
+                ascending: !!orderBy.ascending,
+                nullsFirst: !!orderBy.nullsFirst,
               });
             }
             if (query?.where) {
@@ -221,13 +213,16 @@ export const generateTableService = <Database extends DatabaseStructure>(
       public async count(
         column?: string,
         value?: string | null | string[],
-        query?: QueryCount
+        query?: FindCountParams<ValidColumn>
       ): Promise<number> {
         if (column && value) {
           const searchValue = Array.isArray(value) ? value : [value];
           const result = await (() => {
             const r = this.ref
-              .select(pk, { count: query?.count ?? "estimated", head: true })
+              .select(pk, {
+                count: query?.countMethod ?? "estimated",
+                head: true,
+              })
               .in(column, searchValue);
 
             if (query?.where) {

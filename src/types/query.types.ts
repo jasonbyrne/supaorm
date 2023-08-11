@@ -1,3 +1,5 @@
+import { Except } from "type-fest";
+
 export type FilterOperator =
   | "eq"
   | "neq"
@@ -55,4 +57,41 @@ export type OrderBy<ValidColumn> = {
   field: ValidColumn;
   ascending?: boolean;
   nullsFirst?: boolean;
+};
+
+export type WhereStatement<ValidColumn> = [
+  ValidColumn,
+  `${"" | "not."}${FilterOperator}`,
+  unknown,
+];
+
+export type WhereClause<ValidColumn> = WhereStatement<ValidColumn>[];
+
+export type FindManyParams<ValidColumn> = {
+  select?: ValidColumn[];
+  where?: WhereClause<ValidColumn>;
+  search?: string;
+  orderBy?: OrderBy<ValidColumn>;
+  page?: number;
+  perPage?: number;
+};
+
+export type FindOneParams<ValidColumn> = {
+  select?: ValidColumn[];
+  where?: WhereClause<ValidColumn>;
+  orderBy?: OrderBy<ValidColumn>;
+};
+
+export type FindValueParams<ValidColumn> = Except<
+  FindOneParams<ValidColumn>,
+  "select"
+>;
+
+export type FindColParams<ValidColumn> = Except<
+  FindManyParams<ValidColumn>,
+  "select"
+>;
+
+export type FindCountParams<ValidColumn> = FindOneParams<ValidColumn> & {
+  countMethod?: CountMethods;
 };

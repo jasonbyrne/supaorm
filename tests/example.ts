@@ -13,7 +13,7 @@ const orgs = await organizations.findMany({
 });
 
 all.data.forEach((r) => {
-  console.log(r.created_at);
+  console.log(r?.created_at);
 });
 
 orgs.data.forEach((r) => {

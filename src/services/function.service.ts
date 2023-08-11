@@ -1,27 +1,31 @@
 import {
   FunctionArguments,
-  FunctionFindManyQueryParams,
   FunctionList,
   FunctionRow,
+  ValidFunctionColumn,
   ValidFunctionName,
 } from "../types/function.types";
 import { OrmInterface } from "../types/interface";
 import { DatabaseStructure } from "../types/supaorm.types";
 import { getResultsPagination } from "../utils/get-results-pagination";
 import { getQueryPagination } from "../utils/get-query-pagination";
-import { ListResult } from "../types/query.types";
+import { FindManyParams, FindOneParams } from "../types/query.types";
 import { getSelectedCols } from "../utils/get-selected-cols";
 
 export const generateFunctionService = <Database extends DatabaseStructure>(
   orm: OrmInterface<Database>
 ) => {
-  return <
-    FunctionName extends ValidFunctionName<Database>,
-    ListSchema = FunctionList<Database, FunctionName>,
-    RowSchema = FunctionRow<Database, FunctionName>,
-  >(
+  return <FunctionName extends ValidFunctionName<Database>>(
     functionName: ValidFunctionName<Database>
   ) => {
+    /**
+     * Define types for use within this function
+     */
+    type ListSchema = FunctionList<Database, FunctionName>;
+    type RowSchema = FunctionRow<Database, FunctionName>;
+    type ValidColumn = ValidFunctionColumn<Database, FunctionName>;
+    type FunctionArgs = FunctionArguments<Database, FunctionName>;
+
     return class {
       public get functionName() {
         return functionName;
@@ -36,8 +40,8 @@ export const generateFunctionService = <Database extends DatabaseStructure>(
       }
 
       public async findOne(
-        args: FunctionArguments<Database, FunctionName>,
-        query?: FunctionFindManyQueryParams<Database, FunctionName>
+        args: FunctionArgs,
+        query?: FindOneParams<ValidColumn>
       ): Promise<RowSchema | null> {
         const sp = this.ref(args);
         if (query?.where) {
@@ -54,10 +58,10 @@ export const generateFunctionService = <Database extends DatabaseStructure>(
         return result.data as RowSchema;
       }
 
-      public async findMany<T = ListSchema>(
-        args: FunctionArguments<Database, FunctionName>,
-        query?: FunctionFindManyQueryParams<Database, FunctionName>
-      ): Promise<ListResult<T>> {
+      public async findMany(
+        args: FunctionArgs,
+        query?: FindManyParams<ValidColumn>
+      ) {
         const pagination = getQueryPagination(
           query?.page || 1,
           query?.perPage || 50
@@ -78,7 +82,7 @@ export const generateFunctionService = <Database extends DatabaseStructure>(
           if (result.error) throw result.error;
           if (result.count === null) throw "Could not get result count.";
           return {
-            data: result.data as T[],
+            data: result.data as unknown as ListSchema[],
             pagination: getResultsPagination(pagination, result.count),
           };
         } catch {

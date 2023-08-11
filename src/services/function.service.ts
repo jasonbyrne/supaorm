@@ -62,10 +62,7 @@ export const generateFunctionService = <Database extends DatabaseStructure>(
         args: FunctionArgs,
         query?: FindManyParams<ValidColumn>
       ) {
-        const pagination = getQueryPagination(
-          query?.page || 1,
-          query?.perPage || 50
-        );
+        const pagination = getQueryPagination(query);
         try {
           const result = await (() => {
             const r = this.ref(args);

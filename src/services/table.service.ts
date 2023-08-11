@@ -167,10 +167,7 @@ export const generateTableService = <Database extends DatabaseStructure>(
       ): Promise<ListResult<Pick<TableSchema, T>>>;
       public async findMany(query?: FindManyParams<ValidColumn>) {
         const orderBy = query?.orderBy || defaultOrderBy;
-        const pagination = getQueryPagination(
-          query?.page || 1,
-          query?.perPage || 50
-        );
+        const pagination = getQueryPagination(query);
         try {
           const result = await (() => {
             const r = this.ref

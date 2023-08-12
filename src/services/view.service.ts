@@ -1,6 +1,7 @@
 import { Except } from "type-fest";
 import { OrmInterface } from "../types/interface";
 import {
+  FindCountParams,
   FindManyParams,
   FindOneParams,
   ListResult,
@@ -11,6 +12,7 @@ import { ValidViewColumn, ValidViewName, ViewRow } from "../types/view.types";
 import { getQueryPagination } from "../utils/get-query-pagination";
 import { getResultsPagination } from "../utils/get-results-pagination";
 import { getSelectedCols } from "../utils/get-selected-cols";
+import { countRows } from "../utils/count-rows";
 
 type ViewServiceOpts<ValidColumn> = {
   defaultOrderBy?: OrderBy<ValidColumn>;
@@ -127,12 +129,10 @@ export const generateViewService = <Database extends DatabaseStructure>(
         }
       }
 
-      public async count() {
-        const result = await this.ref.select("*", {
-          count: "estimated",
-          head: true,
-        });
-        return result.count || 0;
+      public async count(
+        query?: FindCountParams<ValidColumn>
+      ): Promise<number> {
+        return countRows(this.ref, query);
       }
     };
   };

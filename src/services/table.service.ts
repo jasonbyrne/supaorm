@@ -23,6 +23,7 @@ import {
 import { getSelectedCols } from "../utils/get-selected-cols";
 import type { Except } from "type-fest";
 import { arrayify } from "../utils/arrayify";
+import { countRows } from "../utils/count-rows";
 
 export type TableServiceOpts<
   Db extends DatabaseStructure,
@@ -198,35 +199,9 @@ export const generateTableService = <Database extends DatabaseStructure>(
       }
 
       public async count(
-        column?: string,
-        value?: string | null | string[],
         query?: FindCountParams<ValidColumn>
       ): Promise<number> {
-        if (column && value) {
-          const searchValue = Array.isArray(value) ? value : [value];
-          const result = await (() => {
-            const r = this.ref
-              .select(pk, {
-                count: query?.countMethod ?? "estimated",
-                head: true,
-              })
-              .in(column, searchValue);
-
-            if (query?.where) {
-              query.where.forEach((filter) => {
-                r.filter(filter[0], filter[1], filter[2]);
-              });
-            }
-
-            return r;
-          })();
-          return result.count || 0;
-        }
-        const result = await this.ref.select(pk, {
-          count: "estimated",
-          head: true,
-        });
-        return result.count || 0;
+        return countRows(this.ref, query);
       }
 
       public save(data: PartialSchema | PartialSchema[]) {

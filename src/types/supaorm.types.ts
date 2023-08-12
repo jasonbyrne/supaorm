@@ -9,6 +9,13 @@ export type DatabaseStructure = {
 
 export type Supabase<Db extends DatabaseStructure> = SupabaseClient<Db>;
 
+export type ValidTableOrViewName<Db extends DatabaseStructure> = string &
+  (keyof Db[SchemaName]["Views"] | keyof Db[SchemaName]["Tables"]);
+
+export type TableOrView<Db extends DatabaseStructure, Name extends string> =
+  | Db[SchemaName]["Views"][Name]
+  | Db[SchemaName]["Tables"][Name];
+
 export type SomeService = {
   findMany: () => Promise<any>;
   findOne: (id: any) => Promise<any>;

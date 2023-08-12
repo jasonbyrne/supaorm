@@ -5,7 +5,7 @@ export const getQueryPagination = (opts?: {
   perPage?: number;
 }): QueryPagination => {
   const page = Math.floor(opts?.page || 1) || 1;
-  const perPage = Math.floor(opts?.perPage || 1) || 1;
+  const perPage = Math.floor(opts?.perPage || 100) || 100;
   const startIndex = (page - 1) * perPage;
   return {
     page,

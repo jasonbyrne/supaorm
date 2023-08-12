@@ -30,8 +30,6 @@ export type TableServiceOpts<
 > = {
   defaultOrderBy?: OrderBy<ValidTableColumn<Db, TableName>>;
   searchField?: ValidTableColumn<Db, TableName>;
-  inbound?: <T>(data: T) => T;
-  outbound?: <T>(data: T) => T;
 };
 
 export const generateTableService = <Database extends DatabaseStructure>(
@@ -66,14 +64,6 @@ export const generateTableService = <Database extends DatabaseStructure>(
      */
     const searchField = opts?.searchField;
     const defaultOrderBy = opts?.defaultOrderBy;
-    const inbound = opts?.inbound ?? ((data) => data);
-    const outbound = opts?.outbound ?? ((data) => data);
-
-    const transformInbound = (data: unknown) => {
-      return Array.isArray(data)
-        ? data.map((row) => inbound(row))
-        : [inbound(data)];
-    };
 
     return class {
       public readonly tableName = tableName;
@@ -134,7 +124,7 @@ export const generateTableService = <Database extends DatabaseStructure>(
           .single();
         if (result.error) throw result.error;
         if (!result.data) return null;
-        return outbound(result.data as unknown as TableSchema);
+        return result.data as any;
       }
 
       public async findManyAsNameValue(
@@ -199,7 +189,7 @@ export const generateTableService = <Database extends DatabaseStructure>(
           if (result.count === null) throw "Could not get result count.";
           const data = result.data as unknown as TableSchema[];
           return {
-            data: data.map((row) => outbound(row)),
+            data,
             pagination: getResultsPagination(pagination, result.count),
           };
         } catch {
@@ -252,15 +242,21 @@ export const generateTableService = <Database extends DatabaseStructure>(
       }
 
       public update(pkValue: string, data: UpdateSchema) {
-        return this.ref.update(inbound(data) as any).eq(pk, pkValue);
+        return this.ref.update(data as any).eq(pk, pkValue);
       }
 
       public insert(data: InsertSchema | InsertSchema[]) {
-        return this.ref.insert(transformInbound(data)).select().single();
+        return this.ref
+          .insert(data as any)
+          .select()
+          .single();
       }
 
       public upsert(data: InsertSchema | InsertSchema[]) {
-        return this.ref.upsert(transformInbound(data)).select().single();
+        return this.ref
+          .upsert(data as any)
+          .select()
+          .single();
       }
     };
   };

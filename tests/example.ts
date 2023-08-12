@@ -49,5 +49,5 @@ const orgContacts = await viewContacts.findMany({
 });
 
 orgContacts.data.forEach((c) => {
-  console.log(c.first_name, c.email);
+  console.log(c.first_name);
 });

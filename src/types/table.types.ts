@@ -35,3 +35,8 @@ export type TableColumn<
   TableName extends ValidTableName<Db>,
   ColumnName extends ValidTableColumn<Db, TableName>,
 > = SelectRow<Db, TableName>[ColumnName];
+
+export type PartialRow<
+  Db extends DatabaseStructure,
+  TableName extends ValidTableName<Db>,
+> = Partial<SelectRow<Db, TableName>>;

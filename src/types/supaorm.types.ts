@@ -9,7 +9,7 @@ export type DatabaseStructure = {
 
 export type Supabase<Db extends DatabaseStructure> = SupabaseClient<Db>;
 
-type SomeService = {
+export type SomeService = {
   findMany: () => Promise<any>;
   findOne: (id: any) => Promise<any>;
 };

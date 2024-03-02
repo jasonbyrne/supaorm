@@ -84,7 +84,7 @@ export const generateTableService = <Database extends DatabaseStructure>(
       public readonly tableName = tableName;
       public readonly pk = pk;
 
-      public get ref() {
+      public get from() {
         return orm.supabase.from(tableName);
       }
 
@@ -94,7 +94,7 @@ export const generateTableService = <Database extends DatabaseStructure>(
       ): Promise<ColumnValue<ColumnName>> {
         const orderBy = query?.orderBy || defaultOrderBy;
         const result = await (() => {
-          const r = this.ref.select(fieldName);
+          const r = this.from.select(fieldName);
           if (orderBy) {
             r.order(orderBy.field, {
               ascending: !!orderBy.ascending,
@@ -132,7 +132,7 @@ export const generateTableService = <Database extends DatabaseStructure>(
         }
       ): Promise<Pick<TableSchema, T> | null>;
       public async findOne(id: string, query?: FindOneParams<ValidColumn>) {
-        const result = await this.ref
+        const result = await this.from
           .select(getSelectedCols(query?.select))
           .eq(pk, id)
           .limit(1)
@@ -180,7 +180,7 @@ export const generateTableService = <Database extends DatabaseStructure>(
           const result = await (() => {
             const selectSql = [getSelectedCols(query?.select)];
             if (query?.join) selectSql.push(getJoinSelect(query.join));
-            const r = this.ref
+            const r = this.from
               .select(selectSql.join(", "), { count: "estimated" })
               .range(pagination.startIndex, pagination.endIndex);
             if (orderBy) {
@@ -220,7 +220,7 @@ export const generateTableService = <Database extends DatabaseStructure>(
       public async count(
         query?: FindCountParams<ValidColumn>
       ): Promise<number> {
-        return countRows(this.ref, query);
+        return countRows(this.from, query);
       }
 
       public save(data: PartialSchema | PartialSchema[]) {
@@ -236,18 +236,18 @@ export const generateTableService = <Database extends DatabaseStructure>(
       }
 
       public update(pkValue: string, data: UpdateSchema) {
-        return this.ref.update(data as any).eq(pk, pkValue);
+        return this.from.update(data as any).eq(pk, pkValue);
       }
 
       public insert(data: InsertSchema | InsertSchema[]) {
-        return this.ref
+        return this.from
           .insert(data as any)
           .select()
           .single();
       }
 
       public upsert(data: InsertSchema | InsertSchema[]) {
-        return this.ref
+        return this.from
           .upsert(data as any)
           .select()
           .single();

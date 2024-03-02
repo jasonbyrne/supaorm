@@ -54,7 +54,7 @@ export type SortOrder = [fieldName: string, behavior: SortBehavior];
 
 export type CountMethods = "exact" | "planned" | "estimated";
 
-export type OrderBy<ValidColumn> = {
+export type OrderBy<ValidColumn extends string> = {
   field: ValidColumn;
   ascending?: boolean;
   nullsFirst?: boolean;
@@ -62,7 +62,7 @@ export type OrderBy<ValidColumn> = {
 
 export type AggregateFunctions = "count" | "sum" | "avg" | "max" | "min";
 
-export type WhereStatement<ValidColumn> = [
+export type WhereStatement<ValidColumn extends string> = [
   ValidColumn,
   `${"" | "not."}${FilterOperator}`,
   unknown,
@@ -74,10 +74,11 @@ export type JoinSelect<Database extends DatabaseStructure> = {
   type: "inner" | "outer";
 };
 
-export type WhereClause<ValidColumn> = WhereStatement<ValidColumn>[];
+export type WhereClause<ValidColumn extends string> =
+  WhereStatement<ValidColumn>[];
 
-export type FindManyParams<ValidColumn> = {
-  select?: ValidColumn[];
+export type FindManyParams<ValidColumn extends string> = {
+  select?: Array<ValidColumn | `${ValidColumn}.${AggregateFunctions}()`>;
   where?: WhereClause<ValidColumn>;
   search?: string;
   orderBy?: OrderBy<ValidColumn>;
@@ -85,22 +86,23 @@ export type FindManyParams<ValidColumn> = {
   perPage?: number;
 };
 
-export type FindOneParams<ValidColumn> = {
+export type FindOneParams<ValidColumn extends string> = {
   select?: ValidColumn[];
   where?: WhereClause<ValidColumn>;
   orderBy?: OrderBy<ValidColumn>;
 };
 
-export type FindValueParams<ValidColumn> = Except<
+export type FindValueParams<ValidColumn extends string> = Except<
   FindOneParams<ValidColumn>,
   "select"
 >;
 
-export type FindColParams<ValidColumn> = Except<
+export type FindColParams<ValidColumn extends string> = Except<
   FindManyParams<ValidColumn>,
   "select"
 >;
 
-export type FindCountParams<ValidColumn> = FindOneParams<ValidColumn> & {
-  countMethod?: CountMethods;
-};
+export type FindCountParams<ValidColumn extends string> =
+  FindOneParams<ValidColumn> & {
+    countMethod?: CountMethods;
+  };

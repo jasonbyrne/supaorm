@@ -14,7 +14,7 @@ import { getResultsPagination } from "../utils/get-results-pagination";
 import { getSelectedCols } from "../utils/get-selected-cols";
 import { countRows } from "../utils/count-rows";
 
-type ViewServiceOpts<ValidColumn> = {
+type ViewServiceOpts<ValidColumn extends string> = {
   defaultOrderBy?: OrderBy<ValidColumn>;
   searchField?: ValidColumn;
 };

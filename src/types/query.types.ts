@@ -1,4 +1,5 @@
 import { Except } from "type-fest";
+import { DatabaseStructure, ValidTableOrViewName } from "./supaorm.types";
 
 export type FilterOperator =
   | "eq"
@@ -59,11 +60,19 @@ export type OrderBy<ValidColumn> = {
   nullsFirst?: boolean;
 };
 
+export type AggregateFunctions = "count" | "sum" | "avg" | "max" | "min";
+
 export type WhereStatement<ValidColumn> = [
   ValidColumn,
   `${"" | "not."}${FilterOperator}`,
   unknown,
 ];
+
+export type JoinSelect<Database extends DatabaseStructure> = {
+  table: ValidTableOrViewName<Database>;
+  columns: string[];
+  type: "inner" | "outer";
+};
 
 export type WhereClause<ValidColumn> = WhereStatement<ValidColumn>[];
 

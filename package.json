@@ -1,6 +1,6 @@
 {
   "name": "supaorm",
-  "version": "0.0.39",
+  "version": "0.0.40",
   "description": "SupaORM is a service-based ORM that augments the Supabase JavaScript Client. It is designed to be used with TypeScript and provides a simple, type-safe API for interacting with your Supabase database.",
   "homepage": "https://github.com/jasonbyrne/supaorm#readme",
   "main": "dist/index.js",
@@ -38,7 +38,7 @@
     "url": "https://github.com/jasonbyrne/supaorm/issues"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.32.0"
+    "@supabase/supabase-js": "^2.39.7"
   },
   "devDependencies": {
     "prettier": "^3.0.1",

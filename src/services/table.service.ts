@@ -16,6 +16,7 @@ import {
   FindManyParams,
   FindOneParams,
   FindValueParams,
+  JoinSelect,
   ListResult,
   NameAndValue,
   OrderBy,
@@ -59,12 +60,25 @@ export const generateTableService = <Database extends DatabaseStructure>(
     >;
     type WithoutSelect<T extends { select?: unknown }> = Except<T, "select">;
     type List = ListResult<TableSchema>;
+    type Join = JoinSelect<Database>;
 
     /**
      * Extract from opts
      */
     const searchField = opts?.searchField;
     const defaultOrderBy = opts?.defaultOrderBy;
+
+    const getJoinSelect = (joins: JoinSelect<any>[]) => {
+      return joins
+        .map(
+          (j) => `
+        ${j.table}${j.type == "inner" ? "!inner" : ""} (
+          ${j.columns.join(", ")}
+        )
+      `
+        )
+        .join(", ");
+    };
 
     return class {
       public readonly tableName = tableName;
@@ -154,15 +168,20 @@ export const generateTableService = <Database extends DatabaseStructure>(
       public async findMany<T extends keyof TableSchema>(
         query: FindManyParams<ValidColumn> & {
           select: T[];
+          join?: Join[];
         }
       ): Promise<ListResult<Pick<TableSchema, T>>>;
-      public async findMany(query?: FindManyParams<ValidColumn>) {
+      public async findMany(
+        query?: FindManyParams<ValidColumn> & { join?: Join[] }
+      ) {
         const orderBy = query?.orderBy || defaultOrderBy;
         const pagination = getQueryPagination(query);
         try {
           const result = await (() => {
+            const selectSql = [getSelectedCols(query?.select)];
+            if (query?.join) selectSql.push(getJoinSelect(query.join));
             const r = this.ref
-              .select(getSelectedCols(query?.select), { count: "estimated" })
+              .select(selectSql.join(", "), { count: "estimated" })
               .range(pagination.startIndex, pagination.endIndex);
             if (orderBy) {
               r.order(orderBy.field, {

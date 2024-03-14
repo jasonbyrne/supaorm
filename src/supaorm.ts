@@ -42,16 +42,18 @@ class SupaORM_Instance<Database extends DatabaseStructure>
 
 let instance: SupaORM_Instance<any> | null = null;
 
-/**
- * Returns a singleton instance of SupaORM. The initializion is delayed to allow you to pass in the Supabase client
- * at the appropriate place in the code, but the init() method must be called before any queries can be made.
- *
- * @returns SupaORM_Instance
- */
-export default function SupaORM<
+export function SupaORM<
   Database extends DatabaseStructure,
 >(): SupaORM_Instance<Database> {
   if (instance !== null) return instance;
   instance = new SupaORM_Instance<Database>();
   return instance;
 }
+
+/**
+ * Returns a singleton instance of SupaORM. The initializion is delayed to allow you to pass in the Supabase client
+ * at the appropriate place in the code, but the init() method must be called before any queries can be made.
+ *
+ * @returns SupaORM_Instance
+ */
+export default SupaORM;
